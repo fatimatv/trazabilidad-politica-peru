@@ -1,0 +1,9 @@
+.next
+node_modules
+.env
+coverage
+dist
+*.log
+trazabilidad-*.png
+tsconfig.tsbuildinfo
+ialaw-brand/

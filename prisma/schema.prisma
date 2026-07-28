@@ -1,0 +1,290 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum VerificationState {
+  DEMO
+  UNVERIFIED
+  AUTOMATIC
+  REVIEWED
+  DISPUTED
+  PUBLISHED
+}
+
+enum CommitmentKind {
+  CONCRETE_PROMISE
+  POLICY_ORIENTATION
+  DIAGNOSIS
+  VALUE_ASPIRATION
+  ANNOUNCEMENT
+  ADOPTED_MEASURE
+  DECLARED_RESULT
+  VERIFIED_RESULT
+}
+
+enum RelationType {
+  SUBSTANTIVE_MATCH
+  PARTIAL_MATCH
+  DIRECT_CONTRADICTION
+  SCOPE_CONTRADICTION
+  TARGET_POPULATION_CONTRADICTION
+  BUDGET_CONTRADICTION
+  REFORMULATION
+  NUANCE
+  PRIORITY_CHANGE
+  RELEVANT_OMISSION
+  PARTIAL_IMPLEMENTATION
+  COMPLETE_IMPLEMENTATION
+  CONTRARY_ACTION
+  NO_ACTION_FOUND
+  INSUFFICIENT_EVIDENCE
+  NOT_COMPARABLE
+}
+
+enum UserRole {
+  ADMIN
+  ANALYST
+  REVIEWER
+}
+
+model Source {
+  id          String      @id
+  title       String
+  sourceType  String
+  url         String?
+  issuedAt    DateTime?
+  isDemo      Boolean     @default(false)
+  createdAt   DateTime    @default(now())
+  documents   Document[]
+  evidence    Evidence[]
+}
+
+model Document {
+  id          String            @id
+  sourceId    String
+  title       String
+  documentType String
+  originalPath String?
+  originalText String?
+  checksum    String?
+  status      VerificationState @default(UNVERIFIED)
+  createdAt   DateTime          @default(now())
+  source      Source            @relation(fields: [sourceId], references: [id])
+  versions    DocumentVersion[]
+  commitments Commitment[]
+}
+
+model DocumentVersion {
+  id          String   @id
+  documentId  String
+  version     Int
+  extractedText String
+  processor   String
+  createdAt   DateTime @default(now())
+  document    Document @relation(fields: [documentId], references: [id])
+}
+
+model Speaker {
+  id          String       @id
+  name        String
+  role        String?
+  commitments Commitment[]
+}
+
+model Organization {
+  id          String       @id
+  name        String
+  type        String
+  commitments Commitment[]
+}
+
+model Topic {
+  id          String       @id
+  name        String
+  parentId    String?
+  commitments Commitment[]
+}
+
+model Commitment {
+  id              String            @id
+  stableId        String            @unique
+  documentId      String
+  speakerId       String?
+  organizationId  String?
+  topicId         String?
+  normalizedText  String
+  originalExcerpt String
+  kind            CommitmentKind
+  sector          String
+  subtopic        String?
+  geography       String?
+  targetPopulation String?
+  promisedAction  String?
+  quantitativeGoal String?
+  announcedDeadline String?
+  expectedInstrument String?
+  budgetReference String?
+  caveats         String?
+  tags            String[]
+  state           VerificationState @default(DEMO)
+  isDemo          Boolean           @default(true)
+  lastReviewedAt  DateTime?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  document        Document          @relation(fields: [documentId], references: [id])
+  speaker         Speaker?          @relation(fields: [speakerId], references: [id])
+  organization    Organization?     @relation(fields: [organizationId], references: [id])
+  topic           Topic?            @relation(fields: [topicId], references: [id])
+  versions        CommitmentVersion[]
+  comparisonsFrom Comparison[]      @relation("fromCommitment")
+  comparisonsTo   Comparison[]      @relation("toCommitment")
+  evidence        Evidence[]
+  actions         GovernmentAction[]
+  reviews         Review[]
+}
+
+model CommitmentVersion {
+  id            String     @id
+  commitmentId  String
+  normalizedText String
+  changeReason  String
+  createdBy     String?
+  createdAt     DateTime   @default(now())
+  commitment    Commitment @relation(fields: [commitmentId], references: [id])
+}
+
+model Comparison {
+  id                 String            @id
+  fromCommitmentId   String
+  toCommitmentId     String
+  relationType       RelationType
+  justification      String
+  evidenceFor        String
+  evidenceAgainst    String
+  confidence         Float
+  method             String
+  generatedBy        String
+  analyzedAt         DateTime
+  state              VerificationState
+  fromCommitment     Commitment        @relation("fromCommitment", fields: [fromCommitmentId], references: [id])
+  toCommitment       Commitment        @relation("toCommitment", fields: [toCommitmentId], references: [id])
+}
+
+model Evidence {
+  id            String     @id
+  commitmentId  String?
+  sourceId      String
+  label         String
+  excerpt       String
+  url           String?
+  capturedAt    DateTime   @default(now())
+  confidence    Float?
+  commitment    Commitment? @relation(fields: [commitmentId], references: [id])
+  source        Source      @relation(fields: [sourceId], references: [id])
+}
+
+model GovernmentAction {
+  id            String     @id
+  commitmentId  String
+  actionType    String
+  title         String
+  status        String
+  occurredAt    DateTime?
+  entity        String
+  sourceUrl     String?
+  notes         String
+  commitment    Commitment @relation(fields: [commitmentId], references: [id])
+  legalInstrument LegalInstrument?
+  budgetRecords BudgetRecord[]
+  projects      Project[]
+}
+
+model LegalInstrument {
+  id            String           @id
+  actionId      String           @unique
+  instrumentType String
+  identifier    String
+  publishedAt   DateTime?
+  status        String
+  action        GovernmentAction @relation(fields: [actionId], references: [id])
+}
+
+model BudgetRecord {
+  id            String           @id
+  actionId      String
+  fiscalYear    Int
+  amount        Decimal
+  currency      String
+  executionRate Float?
+  sourceUrl     String?
+  action        GovernmentAction @relation(fields: [actionId], references: [id])
+}
+
+model Project {
+  id            String           @id
+  actionId      String
+  name          String
+  code          String?
+  status        String
+  works         Work[]
+  action        GovernmentAction @relation(fields: [actionId], references: [id])
+}
+
+model Work {
+  id        String   @id
+  projectId String
+  name      String
+  location  String?
+  progress  Float?
+  status    String
+  project   Project  @relation(fields: [projectId], references: [id])
+  outcomes  Outcome[]
+}
+
+model Outcome {
+  id          String  @id
+  workId      String?
+  title       String
+  metric      String?
+  value       String?
+  verifiedBy  String?
+  sourceUrl   String?
+  work        Work?   @relation(fields: [workId], references: [id])
+}
+
+model Review {
+  id            String     @id
+  commitmentId  String
+  reviewerId    String
+  status        VerificationState
+  notes         String
+  createdAt     DateTime   @default(now())
+  commitment    Commitment @relation(fields: [commitmentId], references: [id])
+  reviewer      User       @relation(fields: [reviewerId], references: [id])
+}
+
+model User {
+  id        String    @id
+  name      String
+  email     String    @unique
+  role      UserRole
+  reviews   Review[]
+  auditLogs AuditLog[]
+}
+
+model AuditLog {
+  id          String   @id
+  userId      String?
+  action      String
+  entityType  String
+  entityId    String
+  beforeJson  Json?
+  afterJson   Json?
+  createdAt   DateTime @default(now())
+  user        User?     @relation(fields: [userId], references: [id])
+}
