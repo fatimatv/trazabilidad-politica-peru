@@ -3,8 +3,9 @@ import { DemoBadge } from "@/components/DemoBadge";
 import { comparisons } from "@/lib/demo-data";
 import { getActionsForCommitment, getCommitmentById } from "@/lib/metrics";
 
-export default function CommitmentDetailPage({ params }: { params: { id: string } }) {
-  const item = getCommitmentById(params.id);
+export default async function CommitmentDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const item = getCommitmentById(id);
   if (!item) notFound();
   const itemActions = getActionsForCommitment(item.id);
   const related = comparisons.filter((comparison) => comparison.fromCommitmentId === item.id || comparison.toCommitmentId === item.id);
