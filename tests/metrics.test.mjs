@@ -17,6 +17,20 @@ test("local political inputs are loaded into traceability data", () => {
   assert.match(demoData, /isDemo: false/);
 });
 
+test("traceability model requires full Keiko input coverage", async () => {
+  const data = await import("../lib/demo-data.ts");
+  const bySource = data.commitments.reduce((acc, item) => {
+    acc[item.sourceId] = (acc[item.sourceId] ?? 0) + 1;
+    return acc;
+  }, {});
+
+  assert.equal(bySource["src-plan-gobierno"], 446);
+  assert.equal(bySource["src-debate-presidencial"], 47);
+  assert.equal(bySource["src-debate-tecnico"], 34);
+  assert.ok(bySource["src-investidura"] >= 30);
+  assert.ok(data.comparisons.length >= 200);
+});
+
 test("csv export includes audit-relevant fields", () => {
   assert.match(metrics, /verificationState/);
   assert.match(metrics, /implementationState/);

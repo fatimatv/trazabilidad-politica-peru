@@ -2,7 +2,7 @@
 
 Plataforma web para analizar compromisos publicos desde documentos de campana y gobierno hasta acciones, presupuesto, ejecucion y resultados.
 
-La version actual carga insumos locales de debates, plan de gobierno de Fuerza Popular y mensaje presidencial. No publica conclusiones verificadas; cada cita debe contrastarse con fuentes primarias oficiales antes de pasar a estado revisado o publicado.
+La version actual carga insumos locales de debates, plan de gobierno de Fuerza Popular y mensaje presidencial. El universo inicial incluye 446 registros del plan, 81 declaraciones de debate y ofrecimientos extraidos del mensaje presidencial. No publica conclusiones verificadas; cada cita debe contrastarse con fuentes primarias oficiales antes de pasar a estado revisado o publicado.
 
 ## Stack
 
@@ -43,7 +43,7 @@ npm run build
 - Panel general con universo documental, cobertura e indicadores.
 - Explorador con busqueda, filtros, tabla y exportacion CSV/JSON.
 - Ficha de compromiso con texto original, normalizacion, evidencia, acciones, comparaciones e historial.
-- Comparador por par de fuentes con debate presidencial, debate tecnico, plan de gobierno y mensaje presidencial.
+- Comparador de evolucion por par de fuentes: conserva, reformula, matiza, marca omisiones y detecta apariciones nuevas entre plan, debates y mensaje presidencial.
 - Linea de tiempo desde compromiso hasta accion.
 - Administracion demo para registrar fuente y simular permisos por rol.
 - Pagina de metodologia con limites del sistema e IA.

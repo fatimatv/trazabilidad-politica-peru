@@ -5,480 +5,295 @@ import type { AuditEvent, Commitment, Comparison, GovernmentAction, Source } fro
 export const platformTitle = "Trazabilidad documental de compromisos presidenciales - Keiko Fujimori";
 export const lastUpdated = "2026-07-28";
 
+type ReferenceTheme = {
+  id: string;
+  nombre: string;
+  icono?: string;
+};
+
+type ReferenceProposal = {
+  id: string;
+  candidato: "keiko";
+  tema: string;
+  tipo: "propuesta" | "meta" | "diagnostico" | "principio" | "100dias";
+  relevancia: "ALTA" | "MEDIA" | "BAJA" | "100 DÍAS";
+  texto: string;
+  cita_textual: string;
+  fuente: {
+    archivo: string;
+    seccion: string;
+    linea_inicio: number;
+    linea_fin: number;
+  };
+  meta_cuantitativa?: string | null;
+};
+
+type ReferenceDeclaration = {
+  id: string;
+  debate_id: "debate-1" | "debate-2";
+  candidato: "keiko";
+  vocero?: string | null;
+  tema: string;
+  tipo: "propuesta" | "diagnostico" | "ataque" | "defensa" | "cifra" | "compromiso" | "principio" | "evasion";
+  texto: string;
+  cita_textual: string;
+  contexto: string;
+  fuente: {
+    archivo: string;
+    linea_inicio: number;
+    linea_fin: number;
+  };
+};
+
+type ReferencePlanDebate = {
+  id: string;
+  candidato: "keiko";
+  propuesta_id?: string | null;
+  declaracion_id?: string | null;
+  relacion: "CONSISTENTE" | "AMPLIA_DEBATE" | "VAGUEA" | "CONTRADICE_DEBATE" | "OMITE" | "NUEVO_DEBATE";
+  analisis: string;
+};
+
+type ReferenceData = {
+  temas: ReferenceTheme[];
+  propuestas: ReferenceProposal[];
+  declaraciones: ReferenceDeclaration[];
+  plan_vs_debate: ReferencePlanDebate[];
+};
+
 const root = process.cwd();
 const inputDir = path.join(root, "Insumos");
-
-const sourceConfig = {
-  debate1: {
-    id: "src-debate-presidencial",
-    file: "keiko.md",
-    title: "Debate presidencial de Keiko Fujimori",
-    type: "Debate presidencial",
-    speaker: "Keiko Fujimori",
-    organization: "Fuerza Popular"
-  },
-  debate2: {
-    id: "src-debate-tecnico",
-    file: "keiko debate técnico.md",
-    title: "Debate técnico de Fuerza Popular",
-    type: "Debate técnico",
-    speaker: "Equipo técnico de Fuerza Popular",
-    organization: "Fuerza Popular"
-  }
-} as const;
-
-function readInput(file: string) {
-  return fs.readFileSync(path.join(inputDir, file), "utf8");
-}
+const reference = JSON.parse(fs.readFileSync(path.join(root, "data", "keiko-reference.json"), "utf8")) as ReferenceData;
+const themeName = new Map(reference.temas.map((theme) => [theme.id, theme.nombre]));
 
 function stripAccents(value: string) {
   return value.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 }
 
-function toKind(raw: string) {
-  const value = stripAccents(raw.toLowerCase());
-  if (value.includes("compromiso")) return "Promesa concreta";
-  if (value.includes("propuesta")) return "Promesa concreta";
-  if (value.includes("anuncio")) return "Anuncio";
-  if (value.includes("cifra")) return "Diagnostico";
-  if (value.includes("diagnostico")) return "Diagnostico";
-  if (value.includes("principio")) return "Orientacion politica general";
+function normalizeToken(value: string) {
+  return stripAccents(value).toLowerCase();
+}
+
+function toPlanKind(tipo: ReferenceProposal["tipo"]): Commitment["kind"] {
+  if (tipo === "diagnostico") return "Diagnostico";
+  if (tipo === "principio") return "Orientacion politica general";
+  if (tipo === "meta") return "Promesa concreta";
+  if (tipo === "100dias") return "Promesa concreta";
+  return "Promesa concreta";
+}
+
+function toDebateKind(tipo: ReferenceDeclaration["tipo"]): Commitment["kind"] {
+  if (tipo === "diagnostico" || tipo === "cifra") return "Diagnostico";
+  if (tipo === "principio") return "Orientacion politica general";
+  if (tipo === "compromiso" || tipo === "propuesta") return "Promesa concreta";
   return "Orientacion politica general";
 }
 
-function toImplementationState(sourceId: string): Commitment["implementationState"] {
-  return sourceId === "src-investidura" ? "Iniciativa formal" : "Sin accion identificada";
+function sourceForDebate(debateId: ReferenceDeclaration["debate_id"]) {
+  return debateId === "debate-1" ? "src-debate-presidencial" : "src-debate-tecnico";
 }
 
-function parseDebate(source: typeof sourceConfig[keyof typeof sourceConfig]) {
-  const content = readInput(source.file);
-  const records = Array.from(content.matchAll(
-    /^###\s+`([^`]+)`\s+[—-]\s+(.+?)\s*\(([^)]+)\)\s*[\r\n]+[\s\S]*?\*\*Líneas:\*\*\s*([^\r\n]+)[\r\n]+[\s\S]*?(?:\*\*Vocero:\*\*\s*([^\r\n]+)[\r\n]+[\s\S]*?)?\*\*Texto:\*\*\s*([^\r\n]+)[\r\n]+[\s\S]*?^>\s*(.+)$/gmu
-  ));
-
-  return records.map((record): Commitment => {
-    const stableId = record[1].trim();
-    const sector = record[2].trim();
-    const rawKind = record[3].trim();
-    const lineRef = record[4].trim();
-    const vocero = record[5]?.trim();
-    const text = record[6].trim();
-    const quote = record[7].trim();
-    const topic = sector.includes("/") ? sector.split("/")[0].trim() : sector;
-    return {
-      id: `c-${stableId}`,
-      stableId,
-      sourceId: source.id,
-      documentTitle: source.title,
-      emittedAt: "PENDIENTE-CONFIRMAR",
-      speaker: vocero ?? source.speaker,
-      organization: source.organization,
-      kind: toKind(rawKind),
-      sector,
-      topic,
-      geography: sector.includes("Transporte") ? "Nacional / urbano" : "Nacional",
-      normalizedText: text,
-      originalExcerpt: quote,
-      promisedAction: text,
-      expectedInstrument: rawKind.includes("propuesta") || rawKind.includes("compromiso") ? "Pendiente de identificar" : undefined,
-      tags: ["insumo-local", source.type, rawKind, sector].map(stripAccents),
-      verificationState: "UNVERIFIED",
-      implementationState: toImplementationState(source.id),
-      confidence: 0.72,
-      isDemo: false,
-      lastReviewedAt: lastUpdated,
-      evidence: [
-        {
-          id: `ev-${stableId}`,
-          sourceId: source.id,
-          label: lineRef,
-          excerpt: quote,
-          confidence: 0.72
-        }
-      ],
-      history: [
-        {
-          date: lastUpdated,
-          actor: "parser-local",
-          change: `Importado desde ${source.file}; requiere contraste con fuente primaria oficial.`
-        }
-      ]
-    };
-  }).slice(0, 22);
+function sourceTitle(sourceId: string) {
+  return sources.find((source) => source.id === sourceId)?.title ?? "Fuente documental";
 }
 
-const investitureCommitments: Commitment[] = [
-  {
-    id: "c-investidura-001",
-    stableId: "investidura-k-001",
-    sourceId: "src-investidura",
-    documentTitle: "Mensaje a la Nación del 28 de julio de 2026",
-    emittedAt: "2026-07-28",
-    speaker: "Keiko Fujimori",
-    organization: "Presidencia de la República",
-    kind: "Promesa concreta",
-    sector: "Seguridad Ciudadana",
-    topic: "Emergencias y seguridad ciudadana",
-    geography: "Nacional",
-    targetPopulation: "Familias peruanas",
-    normalizedText: "Priorizar emergencias y seguridad ciudadana como primer objetivo del gobierno.",
-    originalExcerpt: "El primer objetivo: Emergencias y Seguridad ciudadana.",
-    promisedAction: "Concentrar recursos extraordinarios en mitigación del Fenómeno El Niño y seguridad ciudadana.",
-    announcedDeadline: "Plazo inmediato",
-    expectedInstrument: "Decretos de urgencia y facultades delegadas",
-    tags: ["mensaje-presidencial", "seguridad", "emergencia"],
-    verificationState: "UNVERIFIED",
-    implementationState: "Iniciativa formal",
-    confidence: 0.7,
-    isDemo: false,
-    lastReviewedAt: lastUpdated,
-    evidence: [
-      {
-        id: "ev-investidura-001",
-        sourceId: "src-investidura",
-        label: "Insumos/mensaje-a-la-nacion-28-de-julio.md:L182-L190",
-        excerpt: "En el plazo inmediato mi gobierno estará concentrado, en dos frentes de emergencia nacional: mitigación del fenómeno El Niño y Seguridad ciudadana.",
-        confidence: 0.7
-      }
-    ],
-    history: [{ date: lastUpdated, actor: "curaduria-local", change: "Compromiso extraído del mensaje presidencial local." }]
-  },
-  {
-    id: "c-investidura-002",
-    stableId: "investidura-k-002",
-    sourceId: "src-investidura",
-    documentTitle: "Mensaje a la Nación del 28 de julio de 2026",
-    emittedAt: "2026-07-28",
-    speaker: "Keiko Fujimori",
-    organization: "Presidencia de la República",
-    kind: "Promesa concreta",
-    sector: "Seguridad Ciudadana",
-    topic: "Recuperación territorial",
-    geography: "Nacional",
-    normalizedText: "Recuperar barrios, carreteras y espacios públicos tomados por crimen organizado, narcotráfico o minería ilegal.",
-    originalExcerpt: "vamos a recuperar cada barrio, cada carretera y cada espacio público para las familias peruanas.",
-    promisedAction: "Usar herramientas constitucionales y estados de emergencia cuando corresponda.",
-    expectedInstrument: "Estados de emergencia / acciones de seguridad",
-    tags: ["mensaje-presidencial", "seguridad", "orden-interno"],
-    verificationState: "UNVERIFIED",
-    implementationState: "Iniciativa formal",
-    confidence: 0.7,
-    isDemo: false,
-    lastReviewedAt: lastUpdated,
-    evidence: [
-      {
-        id: "ev-investidura-002",
-        sourceId: "src-investidura",
-        label: "Insumos/mensaje-a-la-nacion-28-de-julio.md:L212-L222",
-        excerpt: "Durante los estados de emergencia, las Fuerzas Armadas asumirán temporalmente el liderazgo de las operaciones de seguridad y del control del orden interno.",
-        confidence: 0.7
-      }
-    ],
-    history: [{ date: lastUpdated, actor: "curaduria-local", change: "Compromiso extraído del mensaje presidencial local." }]
-  },
-  {
-    id: "c-investidura-003",
-    stableId: "investidura-k-003",
-    sourceId: "src-investidura",
-    documentTitle: "Mensaje a la Nación del 28 de julio de 2026",
-    emittedAt: "2026-07-28",
-    speaker: "Keiko Fujimori",
-    organization: "Presidencia de la República",
-    kind: "Promesa concreta",
-    sector: "Juventud",
-    topic: "Jóvenes con Futuro",
-    targetPopulation: "Jóvenes de 14 a 24 años",
-    normalizedText: "Crear la política de Estado Jóvenes con Futuro para inserción económica juvenil, programas de empleo y capital semilla.",
-    originalExcerpt: "La segunda Política de Estado a la que llamaremos “Jóvenes con Futuro” tendrá como objetivo impulsar la inserción económica de los jóvenes.",
-    promisedAction: "Expandir Jóvenes Productivos, Capital Semilla Joven y apoyo integral al emprendedor.",
-    quantitativeGoal: "Reducir la tasa de desempleo juvenil de casi 10% a la mitad.",
-    expectedInstrument: "Política de Estado / programas sociales",
-    tags: ["mensaje-presidencial", "juventud", "empleo"],
-    verificationState: "UNVERIFIED",
-    implementationState: "Iniciativa formal",
-    confidence: 0.74,
-    isDemo: false,
-    lastReviewedAt: lastUpdated,
-    evidence: [
-      {
-        id: "ev-investidura-003",
-        sourceId: "src-investidura",
-        label: "Insumos/mensaje-a-la-nacion-28-de-julio.md:L349-L359",
-        excerpt: "Expandiremos y mejoraremos la calidad de los programas para fortalecer sus capacidades para el empleo, incluyendo Jóvenes Productivos, Capital Semilla Joven.",
-        confidence: 0.74
-      }
-    ],
-    history: [{ date: lastUpdated, actor: "curaduria-local", change: "Compromiso extraído del mensaje presidencial local." }]
-  },
-  {
-    id: "c-investidura-004",
-    stableId: "investidura-k-004",
-    sourceId: "src-investidura",
-    documentTitle: "Mensaje a la Nación del 28 de julio de 2026",
-    emittedAt: "2026-07-28",
-    speaker: "Keiko Fujimori",
-    organization: "Presidencia de la República",
-    kind: "Promesa concreta",
-    sector: "Agua y Saneamiento",
-    topic: "Infraestructura social",
-    geography: "Nacional",
-    normalizedText: "Expandir infraestructura social mediante programas de agua, desagüe, electricidad, telefonía, internet, educación y salud.",
-    originalExcerpt: "expandiremos la infraestructura social con la reorganización de los programas de agua y desagüe, electricidad, telefonía e internet.",
-    promisedAction: "Reorganizar programas de infraestructura social y expandir acceso a agua potable.",
-    expectedInstrument: "Programas de infraestructura social",
-    tags: ["mensaje-presidencial", "agua", "infraestructura"],
-    verificationState: "UNVERIFIED",
-    implementationState: "Iniciativa formal",
-    confidence: 0.72,
-    isDemo: false,
-    lastReviewedAt: lastUpdated,
-    evidence: [
-      {
-        id: "ev-investidura-004",
-        sourceId: "src-investidura",
-        label: "Insumos/mensaje-a-la-nacion-28-de-julio.md:L404-L420",
-        excerpt: "Expandiremos el acceso al agua potable con plantas de tratamiento y sistemas de distribución.",
-        confidence: 0.72
-      }
-    ],
-    history: [{ date: lastUpdated, actor: "curaduria-local", change: "Compromiso extraído del mensaje presidencial local." }]
-  },
-  {
-    id: "c-investidura-005",
-    stableId: "investidura-k-005",
-    sourceId: "src-investidura",
-    documentTitle: "Mensaje a la Nación del 28 de julio de 2026",
-    emittedAt: "2026-07-28",
-    speaker: "Keiko Fujimori",
-    organization: "Presidencia de la República",
-    kind: "Promesa concreta",
-    sector: "Transporte e Infraestructura",
-    topic: "Nueva Carretera Central",
-    geography: "Lima y centro del país",
-    normalizedText: "Culminar la Nueva Carretera Central como obra prioritaria para integrar Lima con el centro del país.",
-    originalExcerpt: "Culminaremos la Nueva Carretera Central como una obra prioritaria para integrar Lima con el centro del país.",
-    promisedAction: "Culminar obra prioritaria de infraestructura vial.",
-    expectedInstrument: "Proyecto de inversión / obra pública",
-    tags: ["mensaje-presidencial", "infraestructura", "carretera"],
-    verificationState: "UNVERIFIED",
-    implementationState: "Iniciativa formal",
-    confidence: 0.74,
-    isDemo: false,
-    lastReviewedAt: lastUpdated,
-    evidence: [
-      {
-        id: "ev-investidura-005",
-        sourceId: "src-investidura",
-        label: "Insumos/mensaje-a-la-nacion-28-de-julio.md:L437-L439",
-        excerpt: "Culminaremos la Nueva Carretera Central como una obra prioritaria para integrar Lima con el centro del país.",
-        confidence: 0.74
-      }
-    ],
-    history: [{ date: lastUpdated, actor: "curaduria-local", change: "Compromiso extraído del mensaje presidencial local." }]
-  },
-  {
-    id: "c-investidura-006",
-    stableId: "investidura-k-006",
-    sourceId: "src-investidura",
-    documentTitle: "Mensaje a la Nación del 28 de julio de 2026",
-    emittedAt: "2026-07-28",
-    speaker: "Keiko Fujimori",
-    organization: "Presidencia de la República",
-    kind: "Promesa concreta",
-    sector: "Modernización del Estado",
-    topic: "Estado digital",
-    geography: "Nacional",
-    normalizedText: "Simplificar el funcionamiento del Estado con tecnología, inteligencia artificial e identidad digital para cada ciudadano.",
-    originalExcerpt: "Con tecnología e inteligencia artificial construiremos un Estado eficiente y cercano.",
-    promisedAction: "Implementar identidad digital y simplificación de trámites.",
-    expectedInstrument: "Reforma del Estado / gobierno digital",
-    tags: ["mensaje-presidencial", "estado", "digitalizacion"],
-    verificationState: "UNVERIFIED",
-    implementationState: "Iniciativa formal",
-    confidence: 0.74,
-    isDemo: false,
-    lastReviewedAt: lastUpdated,
-    evidence: [
-      {
-        id: "ev-investidura-006",
-        sourceId: "src-investidura",
-        label: "Insumos/mensaje-a-la-nacion-28-de-julio.md:L453-L475",
-        excerpt: "Digital para cada ciudadano. Con tecnología e inteligencia artificial construiremos un Estado eficiente y cercano.",
-        confidence: 0.74
-      }
-    ],
-    history: [{ date: lastUpdated, actor: "curaduria-local", change: "Compromiso extraído del mensaje presidencial local." }]
-  }
-];
+function getThemeName(themeId: string) {
+  return themeName.get(themeId) ?? themeId;
+}
 
-const planCommitments: Commitment[] = [
-  {
-    id: "c-plan-k-001",
-    stableId: "plan-k-001",
+function readInput(file: string) {
+  return fs.readFileSync(path.join(inputDir, file), "utf8");
+}
+
+function planToCommitment(item: ReferenceProposal): Commitment {
+  const sector = getThemeName(item.tema);
+  return {
+    id: `c-${item.id}`,
+    stableId: item.id,
     sourceId: "src-plan-gobierno",
     documentTitle: "Plan de Gobierno 2026-2031: Peru con Orden",
     emittedAt: "PENDIENTE-CONFIRMAR",
     speaker: "Fuerza Popular",
     organization: "Fuerza Popular",
-    kind: "Promesa concreta",
-    sector: "Seguridad Ciudadana",
-    topic: "C5i y videovigilancia nacional",
-    geography: "Nacional",
-    normalizedText: "Implementar centros C5i interconectados y una plataforma de informacion en tiempo real para seguridad ciudadana.",
-    originalExcerpt: "Implementación rápida de Centros de Comando y Videovigilancia (C5i) interconectados a nivel nacional, con mapas del delito en tiempo real e inteligencia artificial.",
-    promisedAction: "Desplegar C5i, mapas del delito, alertas comunitarias y analisis predictivo.",
-    quantitativeGoal: "C5i operativo en las 24 regiones al 2031.",
-    expectedInstrument: "Plan nacional de seguridad / inversion publica",
-    tags: ["plan-gobierno", "seguridad", "c5i", "videovigilancia"],
+    kind: toPlanKind(item.tipo),
+    sector,
+    topic: item.fuente.seccion,
+    normalizedText: item.texto,
+    originalExcerpt: item.cita_textual,
+    promisedAction: item.tipo === "diagnostico" || item.tipo === "principio" ? undefined : item.texto,
+    quantitativeGoal: item.meta_cuantitativa ?? undefined,
+    announcedDeadline: item.tipo === "100dias" ? "Primeros 100 dias" : undefined,
+    expectedInstrument: item.tipo === "100dias" ? "Medida de primeros 100 dias" : undefined,
+    tags: ["plan-gobierno", item.tema, item.tipo, item.relevancia].map(stripAccents),
     verificationState: "UNVERIFIED",
     implementationState: "Sin accion identificada",
-    confidence: 0.7,
+    confidence: item.relevancia === "ALTA" ? 0.78 : 0.7,
     isDemo: false,
     lastReviewedAt: lastUpdated,
     evidence: [
       {
-        id: "ev-plan-k-001",
+        id: `ev-${item.id}`,
         sourceId: "src-plan-gobierno",
-        label: "Insumos/Plan-de-Gobierno-Keiko.md:Orden ciudadano",
-        excerpt: "Implementar un Centro Nacional de Comando y Videovigilancia (C5i) en las 24 regiones del pais.",
-        confidence: 0.7
+        label: `${item.fuente.archivo}:L${item.fuente.linea_inicio}-L${item.fuente.linea_fin}`,
+        excerpt: item.cita_textual,
+        confidence: 0.76
       }
     ],
-    history: [{ date: lastUpdated, actor: "curaduria-local", change: "Compromiso curado desde plan de gobierno local." }]
-  },
-  {
-    id: "c-plan-k-002",
-    stableId: "plan-k-002",
-    sourceId: "src-plan-gobierno",
-    documentTitle: "Plan de Gobierno 2026-2031: Peru con Orden",
+    history: [{ date: lastUpdated, actor: "referencia-estructurada", change: "Importado desde el dataset de seguimiento de planes de gobierno." }]
+  };
+}
+
+function debateToCommitment(item: ReferenceDeclaration): Commitment {
+  const sourceId = sourceForDebate(item.debate_id);
+  const sector = getThemeName(item.tema);
+  return {
+    id: `c-${item.id}`,
+    stableId: item.id,
+    sourceId,
+    documentTitle: sourceTitle(sourceId),
     emittedAt: "PENDIENTE-CONFIRMAR",
-    speaker: "Fuerza Popular",
+    speaker: item.vocero ?? "Keiko Fujimori",
     organization: "Fuerza Popular",
-    kind: "Promesa concreta",
-    sector: "Seguridad Ciudadana",
-    topic: "Primeros 100 dias",
-    geography: "Lima, Callao, Piura, Trujillo y Tumbes",
-    normalizedText: "Iniciar operaciones del C5i en Lima y Callao, fortalecer flagrancia express y financiar patrulleros, camaras y comisarias en los primeros 100 dias.",
-    originalExcerpt: "Inicio de operaciones del C5i en Lima y Callao con expansion a ciudades criticas. Fortalecimiento de las Unidades de Flagrancia Express en Lima, Piura y Trujillo.",
-    promisedAction: "Emitir decretos de urgencia para seguridad y modernizacion policial.",
-    announcedDeadline: "Primeros 100 dias",
-    quantitativeGoal: "1,000 patrulleros inteligentes, 10,000 camaras interconectadas y 200 comisarias modernizadas.",
-    expectedInstrument: "Decretos de urgencia / presupuesto publico",
-    tags: ["plan-gobierno", "seguridad", "100-dias", "patrulleros", "camaras"],
+    kind: toDebateKind(item.tipo),
+    sector,
+    topic: item.contexto,
+    normalizedText: item.texto,
+    originalExcerpt: item.cita_textual,
+    promisedAction: item.tipo === "compromiso" || item.tipo === "propuesta" ? item.texto : undefined,
+    tags: ["debate", item.debate_id, item.tema, item.tipo].map(stripAccents),
     verificationState: "UNVERIFIED",
     implementationState: "Sin accion identificada",
-    confidence: 0.72,
+    confidence: 0.74,
     isDemo: false,
     lastReviewedAt: lastUpdated,
     evidence: [
       {
-        id: "ev-plan-k-002",
-        sourceId: "src-plan-gobierno",
-        label: "Insumos/Plan-de-Gobierno-Keiko.md:Primeros 100 dias",
-        excerpt: "Emision de Decretos de Urgencia para financiar 1,000 patrulleros inteligentes, 10,000 camaras interconectadas y modernizacion de 200 comisarias.",
-        confidence: 0.72
+        id: `ev-${item.id}`,
+        sourceId,
+        label: `${item.fuente.archivo}:L${item.fuente.linea_inicio}-L${item.fuente.linea_fin}`,
+        excerpt: item.cita_textual,
+        confidence: 0.74
       }
     ],
-    history: [{ date: lastUpdated, actor: "curaduria-local", change: "Compromiso curado desde plan de gobierno local." }]
-  },
-  {
-    id: "c-plan-k-003",
-    stableId: "plan-k-003",
-    sourceId: "src-plan-gobierno",
-    documentTitle: "Plan de Gobierno 2026-2031: Peru con Orden",
-    emittedAt: "PENDIENTE-CONFIRMAR",
-    speaker: "Fuerza Popular",
-    organization: "Fuerza Popular",
-    kind: "Promesa concreta",
-    sector: "Juventud y Empleo",
-    topic: "Empleo Joven con Futuro",
-    targetPopulation: "Jovenes",
-    normalizedText: "Lanzar Empleo Joven con Futuro como programa preventivo y de insercion laboral juvenil.",
-    originalExcerpt: "Lanzamiento de un programa de Empleo Joven con Futuro para reducir el ingreso de jovenes a economias ilegales.",
-    promisedAction: "Articular prevencion del delito con empleabilidad juvenil.",
-    expectedInstrument: "Programa nacional",
-    tags: ["plan-gobierno", "juventud", "empleo", "prevencion"],
-    verificationState: "UNVERIFIED",
-    implementationState: "Sin accion identificada",
-    confidence: 0.7,
-    isDemo: false,
-    lastReviewedAt: lastUpdated,
-    evidence: [
-      {
-        id: "ev-plan-k-003",
-        sourceId: "src-plan-gobierno",
-        label: "Insumos/Plan-de-Gobierno-Keiko.md:Prevencion del delito",
-        excerpt: "Lanzamiento de un programa de Empleo Joven con Futuro para reducir el ingreso de jovenes a economias ilegales.",
-        confidence: 0.7
+    history: [{ date: lastUpdated, actor: "referencia-estructurada", change: "Importado desde declaraciones procesadas de debate." }]
+  };
+}
+
+function speechSector(text: string) {
+  const value = normalizeToken(text);
+  if (/seguridad|crimen|policia|carcel|extorsion|sicariato|narcotrafico|mafias/.test(value)) return "Seguridad Ciudadana";
+  if (/nino|alimentacion|pronaa|primera infancia|anemia|desnutricion|adolescente/.test(value)) return "Niñez y Adolescencia";
+  if (/joven|beca 18|capital semilla|empleo juvenil/.test(value)) return "Juventud";
+  if (/adultos mayores|pension 65|pension universal/.test(value)) return "Pensiones / Programas Sociales";
+  if (/agua|desague|riego|presas|pozos|infraestructura social/.test(value)) return "Agua y Saneamiento";
+  if (/metro|carretera|vial|transporte|puerto/.test(value)) return "Transporte e Infraestructura";
+  if (/estado|tramites|digital|compras publicas|servicio civil|desregulacion/.test(value)) return "Modernizacion del Estado";
+  if (/mype|cofide|credito|formalidad|inversion|tributaria|laboral/.test(value)) return "MYPE y Emprendimiento";
+  if (/fenomeno el nino|defensas riberenas|cuencas|contingencia/.test(value)) return "Gestion del Riesgo";
+  if (/politica exterior|integracion|alianzas/.test(value)) return "Relaciones Exteriores";
+  return "Gobernanza";
+}
+
+function speechKind(text: string): Commitment["kind"] {
+  const value = normalizeToken(text);
+  if (/%|\b[0-9][0-9.,]*\b|mitad|duplicando|primeros cien dias/.test(value)) return "Promesa concreta";
+  if (/vamos a|implementaremos|impulsaremos|crearemos|lanzaremos|reduciremos|culminaremos|ejecutaremos|reorganizaremos|fortaleceremos|ampliaremos|presentaremos|emitiremos|solicitaremos/.test(value)) return "Promesa concreta";
+  return "Orientacion politica general";
+}
+
+function parseSpeechCommitments(): Commitment[] {
+  const content = readInput("mensaje-a-la-nacion-28-de-julio.md");
+  const lines = content.split(/\r?\n/);
+  const promisePattern = /(implementaremos|impulsaremos|fortaleceremos|reorganizaremos|relanzaremos|lanzaremos|expandiremos|ampliaremos|crearemos|culminaremos|ejecutaremos|reduciremos|iniciaremos|garantizaremos|presentaremos|emitiremos|solicitaremos|modernizaci[oó]n|vamos a recuperar|vamos a garantizar|construiremos|otorgaremos|duplicando|pol[ií]tica de estado|programa nacional|programa multisectorial)/i;
+  const paragraphs: Array<{ start: number; end: number; text: string }> = [];
+  let start = 1;
+  let buffer: string[] = [];
+
+  lines.forEach((line, index) => {
+    const text = line.trim();
+    if (!text) {
+      if (buffer.length) {
+        paragraphs.push({ start, end: index, text: buffer.join(" ").replace(/\s+/g, " ") });
+        buffer = [];
       }
-    ],
-    history: [{ date: lastUpdated, actor: "curaduria-local", change: "Compromiso curado desde plan de gobierno local." }]
-  },
-  {
-    id: "c-plan-k-004",
-    stableId: "plan-k-004",
-    sourceId: "src-plan-gobierno",
-    documentTitle: "Plan de Gobierno 2026-2031: Peru con Orden",
-    emittedAt: "PENDIENTE-CONFIRMAR",
-    speaker: "Fuerza Popular",
-    organization: "Fuerza Popular",
-    kind: "Promesa concreta",
-    sector: "Modernizacion del Estado",
-    topic: "Estado digital y transparente",
-    geography: "Nacional",
-    normalizedText: "Modernizar la gestion publica con un Estado digital, transparente y orientado a resultados.",
-    originalExcerpt: "Un Estado al servicio de la poblacion, eficiente y orientado a resultados.",
-    promisedAction: "Impulsar gestion publica moderna, descentralizada, digital y transparente.",
-    expectedInstrument: "Reforma de gestion publica",
-    tags: ["plan-gobierno", "estado", "digital", "transparencia"],
-    verificationState: "UNVERIFIED",
-    implementationState: "Sin accion identificada",
-    confidence: 0.68,
-    isDemo: false,
-    lastReviewedAt: lastUpdated,
-    evidence: [
-      {
-        id: "ev-plan-k-004",
-        sourceId: "src-plan-gobierno",
-        label: "Insumos/Plan-de-Gobierno-Keiko.md:Vision 2031",
-        excerpt: "Se busca reconstruir la confianza entre el Estado y la sociedad, impulsando una gestion publica moderna, descentralizada, digital y transparente.",
-        confidence: 0.68
-      }
-    ],
-    history: [{ date: lastUpdated, actor: "curaduria-local", change: "Compromiso curado desde plan de gobierno local." }]
-  }
-];
+      start = index + 2;
+      return;
+    }
+    if (!buffer.length) start = index + 1;
+    buffer.push(text.replace(/^[-•]\s*/, ""));
+  });
+
+  if (buffer.length) paragraphs.push({ start, end: lines.length, text: buffer.join(" ").replace(/\s+/g, " ") });
+
+  return paragraphs
+    .filter((paragraph) => promisePattern.test(paragraph.text) && paragraph.text.length > 40 && paragraph.text.length < 900)
+    .map((paragraph, index): Commitment => {
+      const stableId = `mensaje-k-${String(index + 1).padStart(3, "0")}`;
+      const sector = speechSector(paragraph.text);
+      return {
+        id: `c-${stableId}`,
+        stableId,
+        sourceId: "src-investidura",
+        documentTitle: "Mensaje a la Nación del 28 de julio de 2026",
+        emittedAt: "2026-07-28",
+        speaker: "Keiko Fujimori",
+        organization: "Presidencia de la República",
+        kind: speechKind(paragraph.text),
+        sector,
+        topic: sector,
+        normalizedText: paragraph.text,
+        originalExcerpt: paragraph.text,
+        promisedAction: paragraph.text,
+        tags: ["mensaje-presidencial", sector].map(stripAccents),
+        verificationState: "UNVERIFIED",
+        implementationState: "Iniciativa formal",
+        confidence: 0.68,
+        isDemo: false,
+        lastReviewedAt: lastUpdated,
+        evidence: [
+          {
+            id: `ev-${stableId}`,
+            sourceId: "src-investidura",
+            label: `Insumos/mensaje-a-la-nacion-28-de-julio.md:L${paragraph.start}-L${paragraph.end}`,
+            excerpt: paragraph.text,
+            confidence: 0.68
+          }
+        ],
+        history: [{ date: lastUpdated, actor: "parser-local", change: "Extraido por regla de verbos de ofrecimiento en mensaje presidencial." }]
+      };
+    });
+}
 
 export const sources: Source[] = [
-  {
-    id: "src-debate-presidencial",
-    title: "Debate presidencial de Keiko Fujimori",
-    type: "Debate presidencial",
-    issuedAt: "PENDIENTE-CONFIRMAR",
-    status: "UNVERIFIED",
-    coverage: 0.85,
-    isDemo: false,
-    note: "47 declaraciones estructuradas en el insumo local; pendiente contraste con transcripción oficial."
-  },
-  {
-    id: "src-debate-tecnico",
-    title: "Debate técnico de Fuerza Popular",
-    type: "Debate técnico",
-    issuedAt: "PENDIENTE-CONFIRMAR",
-    status: "UNVERIFIED",
-    coverage: 0.78,
-    isDemo: false,
-    note: "34 declaraciones de vocerías técnicas en el insumo local; pendiente URL oficial."
-  },
   {
     id: "src-plan-gobierno",
     title: "Plan de gobierno de Keiko Fujimori / Fuerza Popular",
     type: "Plan de gobierno",
     issuedAt: "PENDIENTE-CONFIRMAR",
     status: "UNVERIFIED",
-    coverage: 0.35,
+    coverage: 1,
     isDemo: false,
-    note: "Documento local disponible para siguiente etapa de normalización."
+    note: "446 propuestas, metas, diagnosticos, principios y compromisos de 100 dias importados desde el proyecto de referencia."
+  },
+  {
+    id: "src-debate-presidencial",
+    title: "Debate presidencial de Keiko Fujimori",
+    type: "Debate presidencial",
+    issuedAt: "PENDIENTE-CONFIRMAR",
+    status: "UNVERIFIED",
+    coverage: 1,
+    isDemo: false,
+    note: "47 declaraciones estructuradas del debate presidencial."
+  },
+  {
+    id: "src-debate-tecnico",
+    title: "Debate técnico de Fuerza Popular",
+    type: "Debate técnico",
+    issuedAt: "PENDIENTE-CONFIRMAR",
+    status: "UNVERIFIED",
+    coverage: 1,
+    isDemo: false,
+    note: "34 declaraciones de vocerías técnicas de Fuerza Popular."
   },
   {
     id: "src-investidura",
@@ -486,86 +301,133 @@ export const sources: Source[] = [
     type: "Mensaje presidencial",
     issuedAt: "2026-07-28",
     status: "UNVERIFIED",
-    coverage: 0.65,
+    coverage: 0.78,
     isDemo: false,
-    note: "Compromisos curados desde el texto local del discurso; requiere validación contra portal oficial."
+    note: "Ofrecimientos extraidos del discurso local mediante reglas de verbos de compromiso; requiere validacion humana."
   }
 ];
 
 export const commitments: Commitment[] = [
-  ...parseDebate(sourceConfig.debate1),
-  ...parseDebate(sourceConfig.debate2),
-  ...planCommitments,
-  ...investitureCommitments
+  ...reference.propuestas.map(planToCommitment),
+  ...reference.declaraciones.map(debateToCommitment),
+  ...parseSpeechCommitments()
 ];
 
-export const actions: GovernmentAction[] = investitureCommitments.map((commitment): GovernmentAction => ({
-  id: `act-${commitment.stableId}`,
-  commitmentId: commitment.id,
-  title: `Anuncio presidencial vinculado: ${commitment.topic}`,
-  actionType: "Anuncio presidencial",
-  entity: "Presidencia de la República",
-  status: "Iniciativa formal",
-  occurredAt: "2026-07-28",
-  notes: "Registro creado desde el mensaje presidencial local. No equivale a norma aprobada, presupuesto ejecutado ni resultado verificado."
-})).concat([
-  {
-    id: "act-pendiente-validacion",
-    commitmentId: "c-debate-1-k-013",
-    title: "Facultades para primeros 100 días",
-    actionType: "Solicitud anunciada",
-    entity: "Poder Ejecutivo / Congreso",
-    status: "Sin accion identificada",
-    notes: "Compromiso de campaña pendiente de contraste contra expedientes legislativos."
-  }
-]);
+function tokensFor(item: Commitment) {
+  const stop = new Set(["para", "como", "este", "esta", "sera", "seran", "cada", "desde", "hasta", "entre", "sobre", "tambien", "nuestra", "nuestro", "pais", "peru", "gobierno"]);
+  return new Set(
+    normalizeToken(`${item.sector} ${item.topic} ${item.tags.join(" ")} ${item.normalizedText}`)
+      .split(/[^a-z0-9]+/)
+      .filter((token) => token.length > 3 && !stop.has(token))
+  );
+}
 
 function scorePair(a: Commitment, b: Commitment) {
-  const tokensA = new Set(stripAccents(`${a.sector} ${a.topic} ${a.tags.join(" ")} ${a.normalizedText}`).toLowerCase().split(/[^a-z0-9]+/).filter((token) => token.length > 3));
-  const tokensB = new Set(stripAccents(`${b.sector} ${b.topic} ${b.tags.join(" ")} ${b.normalizedText}`).toLowerCase().split(/[^a-z0-9]+/).filter((token) => token.length > 3));
+  const tokensA = tokensFor(a);
+  const tokensB = tokensFor(b);
   let overlap = 0;
   tokensA.forEach((token) => {
     if (tokensB.has(token)) overlap += 1;
   });
-  return overlap / Math.max(tokensA.size, tokensB.size, 1);
+  const lexical = overlap / Math.max(Math.min(tokensA.size, tokensB.size), 1);
+  const sectorBoost = a.sector === b.sector ? 0.26 : normalizeToken(a.sector).includes(normalizeToken(b.sector)) || normalizeToken(b.sector).includes(normalizeToken(a.sector)) ? 0.16 : 0;
+  const numericBoost = /\b[0-9][0-9.,%]*\b/.test(a.normalizedText) && /\b[0-9][0-9.,%]*\b/.test(b.normalizedText) ? 0.06 : 0;
+  return Math.min(1, lexical + sectorBoost + numericBoost);
 }
 
-export function buildComparisons(fromSourceId = "src-debate-presidencial", toSourceId = "src-investidura") {
-  const left = commitments.filter((item) => item.sourceId === fromSourceId && item.kind !== "Diagnostico");
-  const right = commitments.filter((item) => item.sourceId === toSourceId);
-  return left.flatMap((from) =>
-    right
-      .map((to) => ({ from, to, score: scorePair(from, to) }))
-      .filter((item) => item.score >= 0.12)
-      .sort((a, b) => b.score - a.score)
-      .slice(0, 2)
-      .map((item, index): Comparison => ({
-        id: `cmp-${from.stableId}-${item.to.stableId}-${index}`,
+function relationFor(score: number, from: Commitment, to: Commitment): Comparison["relationType"] {
+  if (score >= 0.58) return "Coincidencia sustantiva";
+  if (score >= 0.42 && to.normalizedText.length > from.normalizedText.length * 1.2) return "Reformulacion";
+  if (score >= 0.42) return "Coincidencia parcial";
+  if (score >= 0.3) return "Matiz";
+  return "Cambio de prioridad";
+}
+
+function translateReferenceRelation(relacion: ReferencePlanDebate["relacion"]): Comparison["relationType"] {
+  if (relacion === "CONSISTENTE") return "Coincidencia sustantiva";
+  if (relacion === "AMPLIA_DEBATE") return "Reformulacion";
+  if (relacion === "VAGUEA") return "Matiz";
+  if (relacion === "CONTRADICE_DEBATE") return "Contradiccion directa";
+  if (relacion === "NUEVO_DEBATE") return "Reformulacion";
+  return "Omision relevante";
+}
+
+function buildReferenceComparisons() {
+  return reference.plan_vs_debate
+    .filter((item) => item.propuesta_id && item.declaracion_id)
+    .map((item): Comparison | null => {
+      const from = commitments.find((commitment) => commitment.stableId === item.propuesta_id);
+      const to = commitments.find((commitment) => commitment.stableId === item.declaracion_id);
+      if (!from || !to) return null;
+      return {
+        id: item.id,
         fromCommitmentId: from.id,
-        toCommitmentId: item.to.id,
-        relationType: item.score > 0.26 ? "Coincidencia parcial" : "Evidencia insuficiente",
-        justification: "Relación preliminar generada por coincidencia de sector, tema y vocabulario entre insumos locales.",
-        evidenceFor: `${from.originalExcerpt} / ${item.to.originalExcerpt}`,
-        evidenceAgainst: "La relación requiere revisión humana y contraste con fuentes primarias antes de publicarse como conclusión.",
-        confidence: Math.min(0.82, Math.max(0.45, item.score + 0.42)),
-        method: "Coincidencia léxica y temática local",
-        generatedBy: "local-comparator-v1",
+        toCommitmentId: to.id,
+        relationType: translateReferenceRelation(item.relacion),
+        justification: item.analisis,
+        evidenceFor: `${from.originalExcerpt} / ${to.originalExcerpt}`,
+        evidenceAgainst: "Relacion importada como analisis preliminar; requiere revision humana antes de publicarse como conclusion.",
+        confidence: item.relacion === "CONSISTENTE" ? 0.82 : 0.72,
+        method: "Comparacion estructurada del proyecto de referencia",
+        generatedBy: "seguimiento-planes-referencia",
         analyzedAt: lastUpdated,
         state: "AUTOMATIC"
-      }))
-  );
+      };
+    })
+    .filter((item): item is Comparison => item !== null);
+}
+
+export function buildComparisons(fromSourceId = "src-plan-gobierno", toSourceId = "src-debate-presidencial") {
+  const left = commitments.filter((item) => item.sourceId === fromSourceId && item.kind !== "Diagnostico");
+  const right = commitments.filter((item) => item.sourceId === toSourceId);
+  return left
+    .map((from): Comparison | null => {
+      const candidates = right
+        .map((to) => ({ to, score: scorePair(from, to) }))
+        .filter((item) => item.score >= 0.28)
+        .sort((a, b) => b.score - a.score);
+      const best = candidates[0];
+      if (!best) return null;
+      return {
+        id: `cmp-${from.stableId}-${best.to.stableId}`,
+        fromCommitmentId: from.id,
+        toCommitmentId: best.to.id,
+        relationType: relationFor(best.score, from, best.to),
+        justification: "Relacion preliminar por continuidad de tema, vocabulario y alcance entre etapas documentales.",
+        evidenceFor: `${from.originalExcerpt} / ${best.to.originalExcerpt}`,
+        evidenceAgainst: "Puede haber matices no capturados por la regla automatica; debe revisarse contra las fuentes primarias.",
+        confidence: Math.min(0.86, Math.max(0.5, best.score)),
+        method: "Coincidencia tematica y lexical con penalizacion por baja especificidad",
+        generatedBy: "local-evolution-mapper-v2",
+        analyzedAt: lastUpdated,
+        state: "AUTOMATIC"
+      };
+    })
+    .filter((item): item is Comparison => item !== null);
 }
 
 export const comparisons: Comparison[] = [
-  ...buildComparisons("src-debate-presidencial", "src-investidura"),
+  ...buildReferenceComparisons(),
+  ...buildComparisons("src-debate-presidencial", "src-debate-tecnico"),
   ...buildComparisons("src-debate-tecnico", "src-investidura"),
-  ...buildComparisons("src-plan-gobierno", "src-investidura"),
-  ...buildComparisons("src-debate-presidencial", "src-plan-gobierno"),
-  ...buildComparisons("src-debate-tecnico", "src-plan-gobierno")
-].slice(0, 36);
+  ...buildComparisons("src-plan-gobierno", "src-investidura")
+].filter((comparison, index, list) => list.findIndex((item) => item.id === comparison.id) === index);
+
+export const actions: GovernmentAction[] = commitments
+  .filter((commitment) => commitment.sourceId === "src-investidura")
+  .map((commitment): GovernmentAction => ({
+    id: `act-${commitment.stableId}`,
+    commitmentId: commitment.id,
+    title: `Anuncio presidencial vinculado: ${commitment.sector}`,
+    actionType: "Anuncio presidencial",
+    entity: "Presidencia de la República",
+    status: "Iniciativa formal",
+    occurredAt: "2026-07-28",
+    notes: "Registro creado desde el mensaje presidencial local. No equivale a norma aprobada, presupuesto ejecutado ni resultado verificado."
+  }));
 
 export const auditEvents: AuditEvent[] = [
-  { id: "audit-001", date: lastUpdated, actor: "parser-local", action: "Importación de debate presidencial", entity: "src-debate-presidencial" },
-  { id: "audit-002", date: lastUpdated, actor: "parser-local", action: "Importación de debate técnico", entity: "src-debate-tecnico" },
-  { id: "audit-003", date: lastUpdated, actor: "curaduria-local", action: "Extracción de compromisos del mensaje presidencial", entity: "src-investidura" }
+  { id: "audit-001", date: lastUpdated, actor: "referencia-estructurada", action: "Importacion completa de plan Keiko", entity: "src-plan-gobierno" },
+  { id: "audit-002", date: lastUpdated, actor: "referencia-estructurada", action: "Importacion completa de debates Keiko", entity: "src-debate-presidencial/src-debate-tecnico" },
+  { id: "audit-003", date: lastUpdated, actor: "parser-local", action: "Extraccion ampliada de ofrecimientos del mensaje presidencial", entity: "src-investidura" }
 ];
