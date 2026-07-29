@@ -18,6 +18,9 @@ export async function POST(request: Request) {
     data: {
       id: `src-local-${Date.now()}`,
       title: body.title,
+      documentType: body.documentType ?? "Fuente documental",
+      fileName: body.fileName ?? null,
+      candidateCount: Array.isArray(body.candidates) ? body.candidates.length : 0,
       status: "UNVERIFIED",
       isDemo: false,
       queued: true

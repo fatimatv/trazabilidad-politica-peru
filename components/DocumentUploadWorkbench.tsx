@@ -1,6 +1,6 @@
 "use client";
 
-import { Download, FileUp, SearchCheck } from "lucide-react";
+import { CheckCircle2, Download, FileUp, SearchCheck, Send } from "lucide-react";
 import { useMemo, useState } from "react";
 import type { Commitment } from "@/lib/types";
 
@@ -57,6 +57,12 @@ export function DocumentUploadWorkbench({ commitments }: { commitments: Commitme
   const [title, setTitle] = useState("");
   const [documentType, setDocumentType] = useState("Discurso");
   const [text, setText] = useState("");
+  const [fileName, setFileName] = useState("");
+  const [status, setStatus] = useState<{ tone: "idle" | "success" | "error"; message: string }>({
+    tone: "idle",
+    message: "Sin documentos guardados en esta sesion."
+  });
+  const [queue, setQueue] = useState<Array<{ id: string; title: string; candidates: number; documentType: string }>>([]);
 
   const candidates = useMemo(() => {
     const paragraphs = text
@@ -91,13 +97,54 @@ export function DocumentUploadWorkbench({ commitments }: { commitments: Commitme
   const exportPayload = {
     title: title || "Documento sin titulo",
     documentType,
+    fileName,
     importedAt: new Date().toISOString(),
     candidates
   };
 
   return (
     <section className="upload-workbench">
-      <form className="card upload-form">
+      <form
+        className="card upload-form"
+        id="upload-form"
+        onSubmit={async (event) => {
+          event.preventDefault();
+          if (!title.trim() || !text.trim()) {
+            setStatus({ tone: "error", message: "Falta titulo o archivo/texto para guardar el insumo." });
+            return;
+          }
+          const response = await fetch("/api/sources", {
+            method: "POST",
+            headers: {
+              "content-type": "application/json",
+              "x-demo-role": "REVIEWER"
+            },
+            body: JSON.stringify({
+              title,
+              documentType,
+              fileName,
+              originalText: text,
+              candidates
+            })
+          });
+          const payload = await response.json();
+          if (!response.ok) {
+            setStatus({ tone: "error", message: payload.error ?? "No se pudo guardar el insumo." });
+            return;
+          }
+          const saved = {
+            id: payload.data.id as string,
+            title,
+            documentType,
+            candidates: candidates.length
+          };
+          setQueue((current) => [saved, ...current].slice(0, 5));
+          setStatus({
+            tone: "success",
+            message: `Insumo guardado: ${saved.id}. Quedo en cola de revision y procesamiento para actualizar la plataforma.`
+          });
+        }}
+      >
         <div className="section-heading compact">
           <div>
             <h2>Cargar nuevo insumo</h2>
@@ -125,6 +172,7 @@ export function DocumentUploadWorkbench({ commitments }: { commitments: Commitme
             onChange={async (event) => {
               const file = event.target.files?.[0];
               if (!file) return;
+              setFileName(file.name);
               setTitle((current) => current || file.name.replace(/\.[^.]+$/, ""));
               setText(await file.text());
             }}
@@ -140,6 +188,22 @@ export function DocumentUploadWorkbench({ commitments }: { commitments: Commitme
             <p>{candidates.length} posibles compromisos u ofrecimientos detectados.</p>
           </div>
           <SearchCheck size={24} aria-hidden />
+        </div>
+        <div className="upload-actions">
+          <button className="primary" type="submit" form="upload-form">
+            <Send size={16} aria-hidden />Guardar para procesamiento
+          </button>
+          <a
+            className="button"
+            download="preanalisis-documental.json"
+            href={`data:application/json;charset=utf-8,${encodeURIComponent(JSON.stringify(exportPayload, null, 2))}`}
+          >
+            <Download size={16} aria-hidden />Exportar preanalisis
+          </a>
+        </div>
+        <div className={`upload-status ${status.tone}`} aria-live="polite">
+          <CheckCircle2 size={18} aria-hidden />
+          <span>{status.message}</span>
         </div>
         {candidates.length ? (
           <div className="candidate-list" aria-live="polite">
@@ -165,13 +229,17 @@ export function DocumentUploadWorkbench({ commitments }: { commitments: Commitme
         ) : (
           <p className="notice">Carga o pega un texto para generar candidatos. La revision final debe hacerla una persona antes de publicar conclusiones.</p>
         )}
-        <a
-          className="button primary"
-          download="preanalisis-documental.json"
-          href={`data:application/json;charset=utf-8,${encodeURIComponent(JSON.stringify(exportPayload, null, 2))}`}
-        >
-          <Download size={16} aria-hidden />Exportar preanalisis
-        </a>
+        {queue.length ? (
+          <div className="processing-queue">
+            <h3>Cola de procesamiento</h3>
+            {queue.map((item) => (
+              <article key={item.id}>
+                <strong>{item.title}</strong>
+                <span>{item.documentType} / {item.candidates} candidatos / pendiente de revision</span>
+              </article>
+            ))}
+          </div>
+        ) : null}
       </aside>
     </section>
   );
