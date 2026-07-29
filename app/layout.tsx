@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { BarChart3, GitCompareArrows, Landmark, ListFilter, ShieldCheck, SlidersHorizontal } from "lucide-react";
+import { BarChart3, GitCompareArrows, ListFilter, ShieldCheck, SlidersHorizontal } from "lucide-react";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -16,7 +16,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <div className="shell">
           <header className="topbar">
             <Link className="brand" href="/" aria-label="Ir al panel principal">
-              <span className="mark"><Landmark size={20} aria-hidden /></span>
+              <img
+                src="/brand/ialaw-horizontal-blue-bg.png"
+                alt="IALAW Digital Lawyers"
+                width="138"
+                height="65"
+              />
               <span>Trazabilidad politica Peru</span>
             </Link>
             <nav className="nav" aria-label="Navegacion principal">

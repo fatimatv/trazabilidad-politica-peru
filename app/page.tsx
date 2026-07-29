@@ -11,6 +11,7 @@ export default function HomePage() {
     <>
       <section className="hero">
         <div>
+          <p className="brand-kicker">IALAW Digital Lawyers</p>
           <p className="tag warn">DEMO funcional con datos no publicados como hechos</p>
           <h1>Trazabilidad documental de compromisos publicos</h1>
           <p className="lede">
