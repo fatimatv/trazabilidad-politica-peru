@@ -43,9 +43,6 @@ export default function HomePage() {
               </li>
             ))}
           </ul>
-          <p className="notice">
-            La evidencia inicial proviene de archivos locales. Antes de publicar conclusiones reales se debe contrastar cada cita con fuentes primarias oficiales.
-          </p>
         </aside>
       </section>
 
