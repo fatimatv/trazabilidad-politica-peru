@@ -1,11 +1,17 @@
 import { AdminSimulator } from "@/components/AdminSimulator";
-import { auditEvents } from "@/lib/demo-data";
+import { DocumentUploadWorkbench } from "@/components/DocumentUploadWorkbench";
+import { auditEvents, commitments } from "@/lib/demo-data";
 
 export default function AdminPage() {
   return (
     <>
       <h1>Administracion y revision</h1>
-      <p className="lede">Flujo demo para registrar fuente, conservar texto original, revisar compromisos y auditar acciones sensibles.</p>
+      <p className="lede">Carga nuevos insumos, genera un preanalisis de compromisos y conserva una bitacora para revision humana.</p>
+      <DocumentUploadWorkbench commitments={commitments} />
+      <section style={{ marginTop: 20 }}>
+        <h2>Registro manual</h2>
+        <p>Usa este formulario cuando ya tengas una fuente revisada y quieras documentar el ingreso al flujo de auditoria.</p>
+      </section>
       <AdminSimulator />
       <section className="card" style={{ marginTop: 20 }}>
         <h2>Bitacora de auditoria</h2>

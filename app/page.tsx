@@ -11,6 +11,9 @@ export default function HomePage() {
     ...source,
     commitments: commitments.filter((commitment) => commitment.sourceId === source.id).length
   }));
+  const traceableSample = commitments
+    .filter((commitment) => commitment.sourceId === "src-plan-gobierno" && commitment.kind === "Promesa concreta")
+    .slice(0, 4);
 
   return (
     <>
@@ -26,6 +29,7 @@ export default function HomePage() {
           <div className="nav" style={{ justifyContent: "flex-start" }}>
             <Link className="button primary" href="/commitments">Explorar compromisos</Link>
             <Link className="button" href="/compare">Comparar insumos</Link>
+            <Link className="button" href="/graphs">Ver grafos</Link>
           </div>
         </div>
         <aside className="card">
@@ -70,8 +74,17 @@ export default function HomePage() {
       </section>
 
       <section style={{ marginTop: 24 }}>
-        <h2>Compromisos recientes</h2>
-        <CommitmentTable rows={commitments.slice(0, 4)} />
+        <div className="section-heading">
+          <div>
+            <h2>Registros trazables destacados</h2>
+            <p>
+              Esta muestra proviene del Plan de Gobierno de Keiko Fujimori / Fuerza Popular. Su vinculacion se evalua
+              contra debates y mensaje presidencial en el comparador documental.
+            </p>
+          </div>
+          <Link className="button primary" href="/compare">Ver evolucion</Link>
+        </div>
+        <CommitmentTable rows={traceableSample} showSource />
       </section>
     </>
   );
