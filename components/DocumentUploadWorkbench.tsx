@@ -13,11 +13,18 @@ type Candidate = {
 };
 
 const reviewSteps = [
-  ["Recibido", "El documento quedo registrado con ID y texto extraido."],
-  ["Preanalisis", "El sistema propone compromisos, temas y posibles vinculos."],
-  ["Revision documental", "Analista valida citas, fuente, fecha, tipo documental y segmentacion."],
-  ["Revision juridica/politica", "Revisor confirma alcance, consistencia, omisiones y fuerza probatoria."],
-  ["Actualizacion", "Administrador publica los cambios aprobados en compromisos, comparador y grafos."]
+  ["Recibido", "Automatico: el documento queda registrado con ID y texto extraido."],
+  ["Preanalisis", "Automatico: el sistema propone compromisos, temas y posibles vinculos."],
+  ["Revision documental", "Analista: valida citas, fuente, fecha, tipo documental y segmentacion."],
+  ["Revision juridica/politica", "Revisor: confirma alcance, consistencia, omisiones y fuerza probatoria."],
+  ["Actualizacion", "Administrador: publica cambios aprobados en compromisos, comparador y grafos."]
+];
+
+const reviewResponsibilities = [
+  ["Tu accion", "Revisar los candidatos del preanalisis, corregir vinculos y marcar si cada idea se conserva, cambia, se matiza, desaparece o aparece nueva."],
+  ["Analista documental", "Comprueba que cada candidato tenga fuente, fecha, cita o extracto y una segmentacion razonable."],
+  ["Revisor", "Valida la interpretacion politica/juridica antes de convertirla en conclusion publica."],
+  ["Administrador", "Publica solo lo aprobado y deja trazabilidad en la bitacora."]
 ];
 
 const sectorRules: Array<[string, RegExp]> = [
@@ -222,6 +229,21 @@ export function DocumentUploadWorkbench({ commitments }: { commitments: Commitme
               <span>{description}</span>
             </article>
           ))}
+        </div>
+        <div className="review-guide" aria-label="Como hacer la revision">
+          <h3>Como se revisa</h3>
+          <p>
+            En esta version, la plataforma deja el insumo en cola y te muestra el preanalisis. La revision humana consiste
+            en aceptar, corregir o descartar cada candidato antes de publicarlo como compromiso trazable.
+          </p>
+          <div>
+            {reviewResponsibilities.map(([role, description]) => (
+              <article key={role}>
+                <strong>{role}</strong>
+                <span>{description}</span>
+              </article>
+            ))}
+          </div>
         </div>
         {candidates.length ? (
           <div className="candidate-list" aria-live="polite">

@@ -91,7 +91,21 @@ export function AdminSimulator() {
       </form>
       <aside className="card">
         <h2>Proteccion y auditoria</h2>
-        <p><ShieldCheck size={18} aria-hidden /> El flujo distingue administrador, analista y revisor. El registro queda en cola de revision y la arquitectura Prisma incluye usuarios, roles y bitacora para persistencia permanente.</p>
+        <p><ShieldCheck size={18} aria-hidden /> El flujo distingue administrador, analista y revisor. En esta demo puedes asumir esos roles desde el selector; en operacion real serian perfiles separados con bitacora.</p>
+        <div className="role-guide" aria-label="Responsabilidades por rol">
+          <article>
+            <strong>Analista</strong>
+            <span>Ordena fuente, fecha, tipo de documento y citas verificables.</span>
+          </article>
+          <article>
+            <strong>Revisor</strong>
+            <span>Confirma si la lectura del compromiso esta bien sustentada.</span>
+          </article>
+          <article>
+            <strong>Administrador</strong>
+            <span>Aprueba la publicacion en compromisos, comparador y grafos.</span>
+          </article>
+        </div>
         <p className={`upload-status ${status.tone}`} aria-live="polite"><CheckCircle2 size={18} aria-hidden />{status.message}</p>
         {savedRows.length ? (
           <div className="processing-queue">
