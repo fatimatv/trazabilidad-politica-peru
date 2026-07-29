@@ -24,6 +24,20 @@ const safeguards = [
   "Las nuevas cargas documentales generan preanalisis exportable; no modifican conclusiones publicadas sin revision.",
 ];
 
+const reviewRoles = [
+  ["Analista documental", "Revisa que el archivo sea legible, identifica fuente, fecha, tipo documental y extrae candidatos a compromiso."],
+  ["Revisor juridico/politico", "Valida si la cita realmente sostiene la clasificacion, si modifica una promesa previa o si solo agrega contexto."],
+  ["Administrador", "Aprueba la incorporacion final al universo de compromisos, comparador, grafos y bitacora publica."],
+];
+
+const publicationCriteria = [
+  "Fuente identificada y, si existe, URL oficial o archivo primario preservado.",
+  "Cita literal o extracto verificable asociado a cada candidato de compromiso.",
+  "Clasificacion revisada: diagnostico, principio, propuesta, meta, ofrecimiento, norma o accion de cumplimiento.",
+  "Relacion documentada con registros previos: conserva, reformula, matiza, omite, aparece nueva o no comparable.",
+  "Estado final definido: pendiente de revision, revisado, disputado o publicado.",
+];
+
 export default function MethodologyPage() {
   return (
     <>
@@ -95,6 +109,32 @@ export default function MethodologyPage() {
           o normas. El sistema detecta posibles compromisos, estima tema y tipo, y sugiere vinculos con compromisos
           existentes para que una persona revise continuidad o cumplimiento.
         </p>
+      </section>
+
+      <section className="grid cols-2" style={{ marginTop: 22 }}>
+        <article className="card">
+          <h2>Responsables de revision</h2>
+          <div className="timeline">
+            {reviewRoles.map(([role, body]) => (
+              <div className="timeline-item" key={role}>
+                <strong>{role}</strong>
+                <p>{body}</p>
+              </div>
+            ))}
+          </div>
+        </article>
+        <article className="card">
+          <h2>Cuando se considera procesado</h2>
+          <p>
+            Un insumo esta procesado cuando supera la revision documental, se validan sus citas y se decide si actualiza
+            compromisos existentes, crea nuevos registros o solo queda como evidencia contextual.
+          </p>
+          <ul>
+            {publicationCriteria.map((item) => (
+              <li key={item}>{item}</li>
+            ))}
+          </ul>
+        </article>
       </section>
 
       <section className="card" style={{ marginTop: 22 }}>

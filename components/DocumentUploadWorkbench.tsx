@@ -12,6 +12,14 @@ type Candidate = {
   matches: Array<{ id: string; text: string; score: number; source: string }>;
 };
 
+const reviewSteps = [
+  ["Recibido", "El documento quedo registrado con ID y texto extraido."],
+  ["Preanalisis", "El sistema propone compromisos, temas y posibles vinculos."],
+  ["Revision documental", "Analista valida citas, fuente, fecha, tipo documental y segmentacion."],
+  ["Revision juridica/politica", "Revisor confirma alcance, consistencia, omisiones y fuerza probatoria."],
+  ["Actualizacion", "Administrador publica los cambios aprobados en compromisos, comparador y grafos."]
+];
+
 const sectorRules: Array<[string, RegExp]> = [
   ["Seguridad Ciudadana", /seguridad|crimen|policia|carcel|extorsion|sicariato|narcotrafico|mafias/i],
   ["Economia / Macroeconomia", /economia|crecimiento|inversion|tributaria|fiscal|pbi|empleo/i],
@@ -62,7 +70,7 @@ export function DocumentUploadWorkbench({ commitments }: { commitments: Commitme
     tone: "idle",
     message: "Sin documentos guardados en esta sesion."
   });
-  const [queue, setQueue] = useState<Array<{ id: string; title: string; candidates: number; documentType: string }>>([]);
+  const [queue, setQueue] = useState<Array<{ id: string; title: string; candidates: number; documentType: string; reviewer: string; nextStep: string }>>([]);
 
   const candidates = useMemo(() => {
     const paragraphs = text
@@ -136,12 +144,14 @@ export function DocumentUploadWorkbench({ commitments }: { commitments: Commitme
             id: payload.data.id as string,
             title,
             documentType,
-            candidates: candidates.length
+            candidates: candidates.length,
+            reviewer: "Analista documental",
+            nextStep: "Validar citas, metadatos y candidatos detectados"
           };
           setQueue((current) => [saved, ...current].slice(0, 5));
           setStatus({
             tone: "success",
-            message: `Insumo guardado: ${saved.id}. Quedo en cola de revision y procesamiento para actualizar la plataforma.`
+            message: `Insumo guardado: ${saved.id}. Estado: Recibido. Responsable siguiente: ${saved.reviewer}.`
           });
         }}
       >
@@ -205,6 +215,14 @@ export function DocumentUploadWorkbench({ commitments }: { commitments: Commitme
           <CheckCircle2 size={18} aria-hidden />
           <span>{status.message}</span>
         </div>
+        <div className="review-flow" aria-label="Flujo de revision del insumo">
+          {reviewSteps.map(([step, description], index) => (
+            <article className={index === 0 ? "active" : ""} key={step}>
+              <strong>{step}</strong>
+              <span>{description}</span>
+            </article>
+          ))}
+        </div>
         {candidates.length ? (
           <div className="candidate-list" aria-live="polite">
             {candidates.map((candidate) => (
@@ -235,7 +253,8 @@ export function DocumentUploadWorkbench({ commitments }: { commitments: Commitme
             {queue.map((item) => (
               <article key={item.id}>
                 <strong>{item.title}</strong>
-                <span>{item.documentType} / {item.candidates} candidatos / pendiente de revision</span>
+                <span>{item.documentType} / {item.candidates} candidatos / {item.reviewer}</span>
+                <small>{item.nextStep}</small>
               </article>
             ))}
           </div>

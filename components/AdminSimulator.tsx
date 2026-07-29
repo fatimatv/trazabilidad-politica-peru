@@ -13,7 +13,7 @@ export function AdminSimulator() {
     tone: "idle",
     message: "Aun no hay registros manuales guardados en esta sesion."
   });
-  const [savedRows, setSavedRows] = useState<Array<{ id: string; title: string; fileName: string }>>([]);
+  const [savedRows, setSavedRows] = useState<Array<{ id: string; title: string; fileName: string; reviewer: string }>>([]);
 
   const canPublish = role === "ADMIN" || role === "REVIEWER";
 
@@ -50,11 +50,11 @@ export function AdminSimulator() {
             setStatus({ tone: "error", message: payload.error ?? "No se pudo guardar la fuente." });
             return;
           }
-          const saved = { id: payload.data.id as string, title, fileName };
+          const saved = { id: payload.data.id as string, title, fileName, reviewer: "Revisor documental" };
           setSavedRows((current) => [saved, ...current].slice(0, 5));
           setStatus({
             tone: "success",
-            message: `Fuente guardada: ${saved.id}. Quedo registrada para revision y actualizacion de la plataforma.`
+            message: `Fuente guardada: ${saved.id}. Estado: lista para revision. Responsable: ${saved.reviewer}.`
           });
         }}
       >
@@ -100,6 +100,7 @@ export function AdminSimulator() {
               <article key={row.id}>
                 <strong>{row.title}</strong>
                 <span>{row.fileName} / {row.id}</span>
+                <small>{row.reviewer} debe validar metadatos, cita y pertinencia antes de publicar.</small>
               </article>
             ))}
           </div>

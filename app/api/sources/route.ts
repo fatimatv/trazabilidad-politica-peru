@@ -22,6 +22,9 @@ export async function POST(request: Request) {
       fileName: body.fileName ?? null,
       candidateCount: Array.isArray(body.candidates) ? body.candidates.length : 0,
       status: "UNVERIFIED",
+      processingState: "RECEIVED",
+      nextStep: "DOCUMENT_REVIEW",
+      assignedRole: "Analista documental",
       isDemo: false,
       queued: true
     }
