@@ -1,8 +1,8 @@
-# Trazabilidad Politica Peru
+# Trazabilidad documental de compromisos presidenciales - Keiko Fujimori
 
 Plataforma web para analizar compromisos publicos desde documentos de campana y gobierno hasta acciones, presupuesto, ejecucion y resultados.
 
-La version actual es una base funcional con datos `DEMO` claramente marcados. No publica conclusiones verificadas sobre personas reales; los insumos locales deben contrastarse con fuentes primarias oficiales antes de pasar a estado revisado o publicado.
+La version actual carga insumos locales de debates, plan de gobierno de Fuerza Popular y mensaje presidencial. No publica conclusiones verificadas; cada cita debe contrastarse con fuentes primarias oficiales antes de pasar a estado revisado o publicado.
 
 ## Stack
 
@@ -43,16 +43,16 @@ npm run build
 - Panel general con universo documental, cobertura e indicadores.
 - Explorador con busqueda, filtros, tabla y exportacion CSV/JSON.
 - Ficha de compromiso con texto original, normalizacion, evidencia, acciones, comparaciones e historial.
-- Comparador con tipo de relacion, justificacion, evidencia a favor/en contra, confianza y estado de revision.
+- Comparador por par de fuentes con debate presidencial, debate tecnico, plan de gobierno y mensaje presidencial.
 - Linea de tiempo desde compromiso hasta accion.
 - Administracion demo para registrar fuente y simular permisos por rol.
 - Pagina de metodologia con limites del sistema e IA.
 
 Las rutas `POST /api/sources` y `POST /api/commitments` exigen el header `x-demo-role` con `ADMIN`, `ANALYST` o `REVIEWER`. En produccion debe reemplazarse por autenticacion real.
 
-## Datos DEMO
+## Estados de evidencia
 
-Los registros `DEMO` son marcadores funcionales. No deben citarse como hechos. El paso a datos reales requiere:
+Los registros importados desde insumos locales se mantienen como `UNVERIFIED` o `AUTOMATIC`. No deben citarse como hechos verificados. El paso a datos publicados requiere:
 
 1. URL oficial o archivo primario preservado.
 2. Cita literal validada.

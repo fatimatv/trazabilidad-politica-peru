@@ -2,30 +2,43 @@ import Link from "next/link";
 import { AlertTriangle, Database, FileText, GitCompareArrows } from "lucide-react";
 import { CommitmentTable } from "@/components/CommitmentTable";
 import { SectorChart } from "@/components/SectorChart";
-import { commitments, lastUpdated, sources } from "@/lib/demo-data";
+import { commitments, lastUpdated, platformTitle, sources } from "@/lib/demo-data";
 import { getDashboardMetrics, sectorDistribution } from "@/lib/metrics";
 
 export default function HomePage() {
   const metrics = getDashboardMetrics();
+  const sourceCounts = sources.map((source) => ({
+    ...source,
+    commitments: commitments.filter((commitment) => commitment.sourceId === source.id).length
+  }));
+
   return (
     <>
       <section className="hero">
         <div>
           <p className="brand-kicker">IALAW Digital Lawyers</p>
-          <p className="tag warn">DEMO funcional con datos no publicados como hechos</p>
-          <h1>Trazabilidad documental de compromisos publicos</h1>
+          <p className="tag warn">Insumos locales pendientes de verificacion oficial</p>
+          <h1>{platformTitle}</h1>
           <p className="lede">
-            Plataforma neutral para seguir compromisos desde discurso y plan hasta normas, presupuesto,
-            ejecucion y resultados, separando evidencia, inferencia y revision humana.
+            Plataforma neutral para seguir compromisos de debates, plan de gobierno y discurso presidencial
+            hasta acciones, normas, presupuesto, ejecucion y resultados, separando evidencia, inferencia y revision humana.
           </p>
           <div className="nav" style={{ justifyContent: "flex-start" }}>
             <Link className="button primary" href="/commitments">Explorar compromisos</Link>
-            <Link className="button" href="/methodology">Ver metodologia</Link>
+            <Link className="button" href="/compare">Comparar insumos</Link>
           </div>
         </div>
         <aside className="card">
-          <h2>Estado del universo</h2>
+          <h2>Insumos normalizados</h2>
           <p>Ultima actualizacion: <strong>{lastUpdated}</strong></p>
+          <ul className="source-list">
+            {sourceCounts.map((source) => (
+              <li key={source.id}>
+                <strong>{source.commitments}</strong>
+                <span>{source.type}</span>
+              </li>
+            ))}
+          </ul>
           <p className="notice">
             La evidencia inicial proviene de archivos locales. Antes de publicar conclusiones reales se debe contrastar cada cita con fuentes primarias oficiales.
           </p>
@@ -34,7 +47,7 @@ export default function HomePage() {
 
       <section className="grid cols-4" aria-label="Indicadores principales" style={{ marginTop: 24 }}>
         <div className="card metric"><Database size={20} aria-hidden /><strong>{metrics.totalSources}</strong><span>fuentes registradas</span></div>
-        <div className="card metric"><FileText size={20} aria-hidden /><strong>{metrics.totalCommitments}</strong><span>compromisos demo</span></div>
+        <div className="card metric"><FileText size={20} aria-hidden /><strong>{metrics.totalCommitments}</strong><span>compromisos desde insumos</span></div>
         <div className="card metric"><GitCompareArrows size={20} aria-hidden /><strong>{metrics.actionRate}%</strong><span>con accion identificada</span></div>
         <div className="card metric"><AlertTriangle size={20} aria-hidden /><strong>{metrics.insufficientEvidence}</strong><span>con evidencia debil</span></div>
       </section>

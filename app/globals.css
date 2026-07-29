@@ -310,8 +310,56 @@ th { background: var(--accent); color: white; font-size: 0.82rem; text-transform
   padding: 14px;
 }
 
+.source-list {
+  display: grid;
+  gap: 10px;
+  list-style: none;
+  margin: 16px 0;
+  padding: 0;
+}
+
+.source-list li {
+  align-items: center;
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  gap: 10px;
+  justify-content: space-between;
+  padding-bottom: 8px;
+}
+
+.source-list strong {
+  color: var(--accent);
+  font-size: 1.4rem;
+}
+
+.compare-explorer {
+  display: grid;
+  gap: 18px;
+}
+
+.compare-controls {
+  align-items: end;
+  display: grid;
+  gap: 14px;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+}
+
+.compare-summary {
+  display: grid;
+  gap: 6px;
+  min-width: 190px;
+}
+
+.compare-summary span {
+  color: var(--muted);
+}
+
+.compare-summary strong {
+  color: var(--accent);
+}
+
 @media (max-width: 880px) {
-  .hero, .split, .grid.cols-4, .grid.cols-3, .grid.cols-2, .toolbar, .flow {
+  .hero, .split, .grid.cols-4, .grid.cols-3, .grid.cols-2, .toolbar, .flow, .compare-controls {
     grid-template-columns: 1fr;
   }
 

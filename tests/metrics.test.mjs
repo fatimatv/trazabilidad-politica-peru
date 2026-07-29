@@ -7,10 +7,14 @@ const metrics = readFileSync(new URL("../lib/metrics.ts", import.meta.url), "utf
 const schema = readFileSync(new URL("../prisma/schema.prisma", import.meta.url), "utf8");
 const auth = readFileSync(new URL("../lib/auth.ts", import.meta.url), "utf8");
 
-test("demo commitments are visibly flagged", () => {
-  const matches = demoData.match(/isDemo: true/g) ?? [];
-  assert.ok(matches.length >= 4);
-  assert.match(demoData, /DEMO: cita no publicada/);
+test("local political inputs are loaded into traceability data", () => {
+  assert.match(demoData, /Trazabilidad documental de compromisos presidenciales - Keiko Fujimori/);
+  assert.match(demoData, /src-debate-presidencial/);
+  assert.match(demoData, /src-debate-tecnico/);
+  assert.match(demoData, /src-plan-gobierno/);
+  assert.match(demoData, /src-investidura/);
+  assert.match(demoData, /buildComparisons/);
+  assert.match(demoData, /isDemo: false/);
 });
 
 test("csv export includes audit-relevant fields", () => {

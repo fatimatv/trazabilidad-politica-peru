@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { BarChart3, GitCompareArrows, ListFilter, ShieldCheck, SlidersHorizontal } from "lucide-react";
+import { platformTitle } from "@/lib/demo-data";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Trazabilidad politica Peru",
-  description: "Plataforma de trazabilidad documental y evaluacion de consistencia de compromisos publicos."
+  title: platformTitle,
+  description: "Plataforma de trazabilidad documental y evaluacion de consistencia de compromisos presidenciales de Keiko Fujimori."
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -22,7 +23,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 width="138"
                 height="65"
               />
-              <span>Trazabilidad politica Peru</span>
+              <span>{platformTitle}</span>
             </Link>
             <nav className="nav" aria-label="Navegacion principal">
               <Link href="/commitments"><ListFilter size={16} aria-hidden />Compromisos</Link>
