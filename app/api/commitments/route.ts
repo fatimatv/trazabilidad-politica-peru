@@ -18,7 +18,8 @@ export async function POST(request: Request) {
     data: {
       id: `c-local-${Date.now()}`,
       stableId: body.stableId ?? `LOCAL-${Date.now()}`,
-      verificationState: "UNVERIFIED",
+      sourceState: "RECEIVED",
+      implementationState: "Por cumplir",
       queuedForReview: true
     }
   }, { status: 201 });

@@ -3,6 +3,13 @@ import { DemoBadge } from "@/components/DemoBadge";
 import { comparisons } from "@/lib/demo-data";
 import { getActionsForCommitment, getCommitmentById } from "@/lib/metrics";
 
+function sourceStateLabel(state: string) {
+  if (state === "PUBLISHED" || state === "REVIEWED") return "Fuente registrada";
+  if (state === "AUTOMATIC") return "Preanalisis";
+  if (state === "DISPUTED") return "En contraste";
+  return "Fuente pendiente";
+}
+
 export default async function CommitmentDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const item = getCommitmentById(id);
@@ -30,10 +37,10 @@ export default async function CommitmentDetailPage({ params }: { params: Promise
           <div className="card">
             <h2>Cadena de aterrizaje</h2>
             <div className="flow">
-              <div>Discurso<br /><strong>{item.documentTitle}</strong></div>
-              <div>Compromiso<br /><strong>{item.verificationState}</strong></div>
-              <div>Accion<br /><strong>{item.implementationState}</strong></div>
-              <div>Resultado<br /><strong>Evidencia pendiente</strong></div>
+              <div>Fuente<br /><strong>{item.documentTitle}</strong></div>
+              <div>Registro<br /><strong>{sourceStateLabel(item.verificationState)}</strong></div>
+              <div>Cumplimiento<br /><strong>{item.implementationState}</strong></div>
+              <div>Resultado<br /><strong>Por evaluar</strong></div>
             </div>
           </div>
           <div className="card">
@@ -54,7 +61,7 @@ export default async function CommitmentDetailPage({ params }: { params: Promise
                 <p>{action.entity} - {action.status}</p>
                 <p>{action.notes}</p>
               </article>
-            )) : <p>No se encontro accion verificable en las fuentes incorporadas.</p>}
+            )) : <p>Aun no se encontro accion de cumplimiento en las fuentes incorporadas.</p>}
           </div>
         </section>
         <aside className="grid">

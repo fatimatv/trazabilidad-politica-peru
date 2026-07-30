@@ -2,6 +2,14 @@ import Link from "next/link";
 import type { Commitment } from "@/lib/types";
 import { DemoBadge } from "./DemoBadge";
 
+function sourceStateLabel(row: Commitment) {
+  if (row.verificationState === "PUBLISHED" || row.verificationState === "REVIEWED") return "Fuente registrada";
+  if (row.verificationState === "AUTOMATIC") return "Preanalisis";
+  if (row.verificationState === "DISPUTED") return "En contraste";
+  if (row.verificationState === "DEMO") return "Demo";
+  return "Fuente pendiente";
+}
+
 export function CommitmentTable({ rows, showSource = false }: { rows: Commitment[]; showSource?: boolean }) {
   return (
     <div className="table-wrap">
@@ -13,8 +21,8 @@ export function CommitmentTable({ rows, showSource = false }: { rows: Commitment
             <th>Compromiso normalizado</th>
             <th>Sector</th>
             <th>Tipo</th>
-            <th>Implementacion</th>
-            <th>Revision</th>
+            <th>Cumplimiento</th>
+            <th>Fuente documental</th>
           </tr>
         </thead>
         <tbody>
@@ -26,7 +34,7 @@ export function CommitmentTable({ rows, showSource = false }: { rows: Commitment
               <td>{row.sector}</td>
               <td>{row.kind}</td>
               <td>{row.implementationState}</td>
-              <td>{row.verificationState}</td>
+              <td>{sourceStateLabel(row)}</td>
             </tr>
           ))}
         </tbody>

@@ -54,7 +54,7 @@ export type GovernmentAction = {
   title: string;
   actionType: string;
   entity: string;
-  status: "Sin accion identificada" | "Iniciativa formal" | "Norma aprobada" | "Presupuesto asignado" | "Ejecucion" | "Resultado verificado";
+  status: "Por cumplir" | "Iniciativa formal" | "Norma aprobada" | "Presupuesto asignado" | "Ejecucion" | "Resultado verificado";
   occurredAt?: string;
   sourceUrl?: string;
   notes: string;

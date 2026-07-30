@@ -32,7 +32,7 @@ test("traceability model requires full Keiko input coverage", async () => {
 });
 
 test("csv export includes audit-relevant fields", () => {
-  assert.match(metrics, /verificationState/);
+  assert.match(metrics, /sourceState/);
   assert.match(metrics, /implementationState/);
   assert.match(metrics, /isDemo/);
 });

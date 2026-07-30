@@ -20,11 +20,11 @@ export default function HomePage() {
       <section className="hero">
         <div>
           <p className="brand-kicker">IALAW Digital Lawyers</p>
-          <p className="tag warn">Insumos locales pendientes de verificacion oficial</p>
+          <p className="tag warn">Seguimiento de cumplimiento en etapa inicial</p>
           <h1>{platformTitle}</h1>
           <p className="lede">
             Plataforma neutral para seguir compromisos de debates, plan de gobierno y discurso presidencial
-            hasta acciones, normas, presupuesto, ejecucion y resultados, separando evidencia, inferencia y revision humana.
+            hasta acciones, normas, presupuesto, ejecucion y resultados, sin confundir existencia del compromiso con cumplimiento.
           </p>
           <div className="nav" style={{ justifyContent: "flex-start" }}>
             <Link className="button primary" href="/commitments">Explorar compromisos</Link>

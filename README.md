@@ -50,12 +50,16 @@ npm run build
 
 Las rutas `POST /api/sources` y `POST /api/commitments` exigen el header `x-demo-role` con `ADMIN`, `ANALYST` o `REVIEWER`. En produccion debe reemplazarse por autenticacion real.
 
-## Estados de evidencia
+## Estados de cumplimiento
 
-Los registros importados desde insumos locales se mantienen como `UNVERIFIED` o `AUTOMATIC`. No deben citarse como hechos verificados. El paso a datos publicados requiere:
+Los compromisos provenientes del plan de gobierno, debates y discursos se consideran fuentes documentales registradas
+cuando conservan cita o extracto y referencia al insumo. Eso no significa que esten cumplidos.
 
-1. URL oficial o archivo primario preservado.
-2. Cita literal validada.
-3. Revision humana.
-4. Registro de auditoria.
-5. Estado distinto de `DEMO`.
+El estado inicial de cumplimiento es `Por cumplir`, especialmente al inicio del gobierno. Solo cambia cuando una fuente
+posterior acredita accion gubernamental:
+
+1. Iniciativa formal.
+2. Norma aprobada.
+3. Presupuesto asignado.
+4. Ejecucion.
+5. Resultado verificado.

@@ -4,8 +4,8 @@ const pipeline = [
   ["1. Ingesta", "Se registran planes, debates, discursos, comunicados, notas de prensa, declaraciones, informes y normas con texto original, fuente y fecha."],
   ["2. Normalizacion", "El sistema separa diagnosticos, principios, metas, propuestas, ofrecimientos y medidas para evitar mezclar aspiraciones con compromisos verificables."],
   ["3. Vinculacion", "Cada registro se compara con etapas posteriores para identificar continuidad, reformulacion, matiz, cambio de prioridad, omision o aparicion nueva."],
-  ["4. Revision", "Las relaciones automaticas quedan como preanalisis. Una persona revisora valida citas, contexto, alcance y fuerza probatoria antes de publicar conclusiones."],
-  ["5. Seguimiento", "Cuando aparecen normas, presupuesto, ejecucion o resultados, se vinculan con el compromiso original para evaluar cumplimiento y consistencia."],
+  ["4. Contraste", "Las relaciones automaticas quedan como preanalisis. Una persona revisora valida si una idea se conserva, cambia, se matiza, desaparece o aparece nueva."],
+  ["5. Cumplimiento", "Como el gobierno recien inicia, el estado base es Por cumplir. Cuando aparecen normas, presupuesto, ejecucion o resultados, se vinculan con el compromiso original."],
 ];
 
 const relationTypes = [
@@ -19,15 +19,15 @@ const relationTypes = [
 
 const safeguards = [
   "La ausencia de evidencia en el sistema no prueba incumplimiento; solo identifica vacios documentales dentro de las fuentes cargadas.",
-  "Las coincidencias automaticas no son conclusiones politicas: son rutas de revision para una persona analista.",
-  "Los registros conservan cita o extracto, fuente, tipo documental, sector, estado de revision y nivel de confianza.",
-  "Las nuevas cargas documentales generan preanalisis exportable; no modifican conclusiones publicadas sin revision.",
+  "Las coincidencias automaticas no son conclusiones politicas: son rutas de contraste para una persona analista.",
+  "Los registros conservan cita o extracto, fuente, tipo documental, sector, estado de cumplimiento y nivel de confianza.",
+  "Las nuevas cargas documentales generan preanalisis exportable; no modifican estados de cumplimiento sin revision.",
 ];
 
 const reviewRoles = [
-  ["Analista documental", "Revisa que el archivo sea legible, identifica fuente, fecha, tipo documental y extrae candidatos a compromiso."],
-  ["Revisor juridico/politico", "Valida si la cita realmente sostiene la clasificacion, si modifica una promesa previa o si solo agrega contexto."],
-  ["Administrador", "Aprueba la incorporacion final al universo de compromisos, comparador, grafos y bitacora publica."],
+  ["Analista documental", "Revisa que una nueva carga tenga fuente, fecha, tipo documental y candidatos bien extraidos."],
+  ["Revisor juridico/politico", "Valida si una accion posterior acredita cumplimiento, cumplimiento parcial o solo continuidad discursiva."],
+  ["Administrador", "Aprueba cambios en compromisos, comparador, grafos, bitacora publica y estado de cumplimiento."],
 ];
 
 const publicationCriteria = [
@@ -35,7 +35,7 @@ const publicationCriteria = [
   "Cita literal o extracto verificable asociado a cada candidato de compromiso.",
   "Clasificacion revisada: diagnostico, principio, propuesta, meta, ofrecimiento, norma o accion de cumplimiento.",
   "Relacion documentada con registros previos: conserva, reformula, matiza, omite, aparece nueva o no comparable.",
-  "Estado final definido: pendiente de revision, revisado, disputado o publicado.",
+  "Estado de cumplimiento definido: por cumplir, iniciativa formal, norma aprobada, presupuesto asignado, ejecucion o resultado verificado.",
 ];
 
 export default function MethodologyPage() {
@@ -113,7 +113,7 @@ export default function MethodologyPage() {
 
       <section className="grid cols-2" style={{ marginTop: 22 }}>
         <article className="card">
-          <h2>Responsables de revision</h2>
+          <h2>Responsables del seguimiento</h2>
           <div className="timeline">
             {reviewRoles.map(([role, body]) => (
               <div className="timeline-item" key={role}>
@@ -124,10 +124,10 @@ export default function MethodologyPage() {
           </div>
         </article>
         <article className="card">
-          <h2>Cuando se considera procesado</h2>
+          <h2>Cuando cambia el cumplimiento</h2>
           <p>
-            Un insumo esta procesado cuando supera la revision documental, se validan sus citas y se decide si actualiza
-            compromisos existentes, crea nuevos registros o solo queda como evidencia contextual.
+            Los compromisos de campana y discursos estan registrados como fuentes documentales. Su cumplimiento cambia
+            solo cuando una fuente posterior acredita accion gubernamental, norma, presupuesto, ejecucion o resultado.
           </p>
           <ul>
             {publicationCriteria.map((item) => (

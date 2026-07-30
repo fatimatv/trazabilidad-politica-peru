@@ -1,6 +1,14 @@
 import { actions, commitments, comparisons, sources } from "./demo-data";
 import type { Commitment } from "./types";
 
+function sourceStateLabel(state: Commitment["verificationState"]) {
+  if (state === "PUBLISHED" || state === "REVIEWED") return "Fuente registrada";
+  if (state === "AUTOMATIC") return "Preanalisis";
+  if (state === "DISPUTED") return "En contraste";
+  if (state === "DEMO") return "Demo";
+  return "Fuente pendiente";
+}
+
 export function getSectors() {
   return Array.from(new Set(commitments.map((item) => item.sector))).sort();
 }
@@ -60,7 +68,7 @@ export function buildTimeline() {
     date: item.emittedAt && item.emittedAt !== "PENDIENTE" ? item.emittedAt : "2026-07-28",
     title: item.normalizedText,
     type: "Compromiso",
-    state: item.verificationState,
+    state: item.implementationState,
     sector: item.sector
   }));
   const actionEvents = actions.map((item) => ({
@@ -82,9 +90,16 @@ export function toCsv(rows: Commitment[]) {
     "kind",
     "normalizedText",
     "implementationState",
-    "verificationState",
+    "sourceState",
     "isDemo"
   ];
   const escape = (value: unknown) => `"${String(value ?? "").replaceAll("\"", "\"\"")}"`;
-  return [headers.join(","), ...rows.map((row) => headers.map((header) => escape(row[header as keyof Commitment])).join(","))].join("\n");
+  return [
+    headers.join(","),
+    ...rows.map((row) =>
+      headers
+        .map((header) => escape(header === "sourceState" ? sourceStateLabel(row.verificationState) : row[header as keyof Commitment]))
+        .join(",")
+    )
+  ].join("\n");
 }

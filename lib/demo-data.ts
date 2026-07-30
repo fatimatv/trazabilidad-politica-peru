@@ -125,8 +125,8 @@ function planToCommitment(item: ReferenceProposal): Commitment {
     announcedDeadline: item.tipo === "100dias" ? "Primeros 100 dias" : undefined,
     expectedInstrument: item.tipo === "100dias" ? "Medida de primeros 100 dias" : undefined,
     tags: ["plan-gobierno", item.tema, item.tipo, item.relevancia].map(stripAccents),
-    verificationState: "UNVERIFIED",
-    implementationState: "Sin accion identificada",
+    verificationState: "PUBLISHED",
+    implementationState: "Por cumplir",
     confidence: item.relevancia === "ALTA" ? 0.78 : 0.7,
     isDemo: false,
     lastReviewedAt: lastUpdated,
@@ -161,8 +161,8 @@ function debateToCommitment(item: ReferenceDeclaration): Commitment {
     originalExcerpt: item.cita_textual,
     promisedAction: item.tipo === "compromiso" || item.tipo === "propuesta" ? item.texto : undefined,
     tags: ["debate", item.debate_id, item.tema, item.tipo].map(stripAccents),
-    verificationState: "UNVERIFIED",
-    implementationState: "Sin accion identificada",
+    verificationState: "PUBLISHED",
+    implementationState: "Por cumplir",
     confidence: 0.74,
     isDemo: false,
     lastReviewedAt: lastUpdated,
@@ -245,8 +245,8 @@ function parseSpeechCommitments(): Commitment[] {
         originalExcerpt: paragraph.text,
         promisedAction: paragraph.text,
         tags: ["mensaje-presidencial", sector].map(stripAccents),
-        verificationState: "UNVERIFIED",
-        implementationState: "Iniciativa formal",
+        verificationState: "PUBLISHED",
+        implementationState: "Por cumplir",
         confidence: 0.68,
         isDemo: false,
         lastReviewedAt: lastUpdated,
@@ -270,7 +270,7 @@ export const sources: Source[] = [
     title: "Plan de gobierno de Keiko Fujimori / Fuerza Popular",
     type: "Plan de gobierno",
     issuedAt: "PENDIENTE-CONFIRMAR",
-    status: "UNVERIFIED",
+    status: "PUBLISHED",
     coverage: 1,
     isDemo: false,
     note: "446 propuestas, metas, diagnosticos, principios y compromisos de 100 dias importados desde el proyecto de referencia."
@@ -280,7 +280,7 @@ export const sources: Source[] = [
     title: "Debate presidencial de Keiko Fujimori",
     type: "Debate presidencial",
     issuedAt: "PENDIENTE-CONFIRMAR",
-    status: "UNVERIFIED",
+    status: "PUBLISHED",
     coverage: 1,
     isDemo: false,
     note: "47 declaraciones estructuradas del debate presidencial."
@@ -290,7 +290,7 @@ export const sources: Source[] = [
     title: "Debate técnico de Fuerza Popular",
     type: "Debate técnico",
     issuedAt: "PENDIENTE-CONFIRMAR",
-    status: "UNVERIFIED",
+    status: "PUBLISHED",
     coverage: 1,
     isDemo: false,
     note: "34 declaraciones de vocerías técnicas de Fuerza Popular."
@@ -300,10 +300,10 @@ export const sources: Source[] = [
     title: "Mensaje a la Nación del 28 de julio de 2026",
     type: "Mensaje presidencial",
     issuedAt: "2026-07-28",
-    status: "UNVERIFIED",
+    status: "PUBLISHED",
     coverage: 0.78,
     isDemo: false,
-    note: "Ofrecimientos extraidos del discurso local mediante reglas de verbos de compromiso; requiere validacion humana."
+    note: "Ofrecimientos extraidos del discurso local mediante reglas de verbos de compromiso; cumplimiento aun por evaluar."
   }
 ];
 

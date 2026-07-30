@@ -39,7 +39,7 @@ export function CommitmentFilters({ rows, sectors }: { rows: Commitment[]; secto
           <select value={state} onChange={(event) => setState(event.target.value)}>
             <option value="all">Todos</option>
             <option value="DEMO">DEMO</option>
-            <option value="Sin accion identificada">Sin accion identificada</option>
+            <option value="Por cumplir">Por cumplir</option>
             <option value="Iniciativa formal">Iniciativa formal</option>
             <option value="Presupuesto asignado">Presupuesto asignado</option>
           </select>
