@@ -1,6 +1,6 @@
 "use client";
 
-import { CheckCircle2, Download, FileUp, SearchCheck, Send } from "lucide-react";
+import { CheckCircle2, ClipboardCheck, Download, FileUp, SearchCheck, Send } from "lucide-react";
 import { useMemo, useState } from "react";
 import type { Commitment } from "@/lib/types";
 
@@ -10,6 +10,16 @@ type Candidate = {
   sector: string;
   kind: string;
   matches: Array<{ id: string; text: string; score: number; source: string }>;
+};
+
+type QueueItem = {
+  id: string;
+  title: string;
+  candidates: number;
+  documentType: string;
+  reviewer: string;
+  nextStep: string;
+  status: "Pendiente de revision" | "En revision documental" | "Aprobado para publicar";
 };
 
 const reviewSteps = [
@@ -77,7 +87,7 @@ export function DocumentUploadWorkbench({ commitments }: { commitments: Commitme
     tone: "idle",
     message: "Sin documentos guardados en esta sesion."
   });
-  const [queue, setQueue] = useState<Array<{ id: string; title: string; candidates: number; documentType: string; reviewer: string; nextStep: string }>>([]);
+  const [queue, setQueue] = useState<QueueItem[]>([]);
 
   const candidates = useMemo(() => {
     const paragraphs = text
@@ -153,7 +163,8 @@ export function DocumentUploadWorkbench({ commitments }: { commitments: Commitme
             documentType,
             candidates: candidates.length,
             reviewer: "Analista documental",
-            nextStep: "Validar citas, metadatos y candidatos detectados"
+            nextStep: "Validar citas, metadatos y candidatos detectados",
+            status: "Pendiente de revision" as const
           };
           setQueue((current) => [saved, ...current].slice(0, 5));
           setStatus({
@@ -272,11 +283,70 @@ export function DocumentUploadWorkbench({ commitments }: { commitments: Commitme
         {queue.length ? (
           <div className="processing-queue">
             <h3>Cola de procesamiento</h3>
+            <div className="approval-instructions">
+              <ClipboardCheck size={18} aria-hidden />
+              <p>
+                Para continuar: revisa los candidatos del preanalisis, corrige mentalmente lo que no corresponde y pulsa
+                <strong> Marcar revision documental</strong>. Si el insumo esta listo para incorporarse al seguimiento,
+                pulsa <strong>Aprobar incorporacion</strong>.
+              </p>
+            </div>
             {queue.map((item) => (
-              <article key={item.id}>
+              <article className={item.status === "Aprobado para publicar" ? "approved" : ""} key={item.id}>
                 <strong>{item.title}</strong>
                 <span>{item.documentType} / {item.candidates} candidatos / {item.reviewer}</span>
+                <span>Estado: {item.status}</span>
                 <small>{item.nextStep}</small>
+                <div className="queue-actions">
+                  <button
+                    className="button"
+                    disabled={item.status === "Aprobado para publicar"}
+                    type="button"
+                    onClick={() => {
+                      setQueue((current) =>
+                        current.map((row) =>
+                          row.id === item.id
+                            ? {
+                                ...row,
+                                status: "En revision documental",
+                                nextStep: "Revisar candidatos uno por uno y confirmar si actualizan cumplimiento o solo agregan contexto"
+                              }
+                            : row
+                        )
+                      );
+                      setStatus({
+                        tone: "success",
+                        message: `${item.id}: revision documental abierta. Revisa candidatos, citas y vinculos antes de aprobar.`
+                      });
+                    }}
+                  >
+                    Marcar revision documental
+                  </button>
+                  <button
+                    className="primary"
+                    disabled={item.status === "Aprobado para publicar"}
+                    type="button"
+                    onClick={() => {
+                      setQueue((current) =>
+                        current.map((row) =>
+                          row.id === item.id
+                            ? {
+                                ...row,
+                                status: "Aprobado para publicar",
+                                nextStep: "Listo para que el administrador lo incorpore a compromisos, comparador y grafos"
+                              }
+                            : row
+                        )
+                      );
+                      setStatus({
+                        tone: "success",
+                        message: `${item.id}: aprobado. En esta demo queda marcado como listo para publicacion; en produccion se guardaria en base de datos y actualizaria la plataforma.`
+                      });
+                    }}
+                  >
+                    Aprobar incorporacion
+                  </button>
+                </div>
               </article>
             ))}
           </div>
