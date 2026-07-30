@@ -2,6 +2,7 @@
 
 import { CheckCircle2, ClipboardCheck, Download, FileUp, SearchCheck, Send } from "lucide-react";
 import { useMemo, useState } from "react";
+import { appendSessionCommitments } from "@/lib/session-commitments";
 import type { Commitment } from "@/lib/types";
 
 type Candidate = {
@@ -17,6 +18,9 @@ type QueueItem = {
   title: string;
   candidates: number;
   documentType: string;
+  fileName: string;
+  importedAt: string;
+  candidatesList: Candidate[];
   reviewer: string;
   nextStep: string;
   status: "Pendiente de revision" | "En revision documental" | "Incorporado al seguimiento";
@@ -66,6 +70,15 @@ function inferKind(text: string) {
   if (/%|\b[0-9][0-9.,]*\b|mitad|duplicaremos|reduciremos/i.test(text)) return "Meta u ofrecimiento medible";
   if (/implementaremos|impulsaremos|crearemos|lanzaremos|fortaleceremos|presentaremos|emitiremos|vamos a|se implementara|se creara/i.test(text)) return "Compromiso u ofrecimiento";
   return "Declaracion relevante";
+}
+
+function toCommitmentKind(kind: Candidate["kind"]): Commitment["kind"] {
+  if (kind === "Meta u ofrecimiento medible" || kind === "Compromiso u ofrecimiento") return "Promesa concreta";
+  return "Anuncio";
+}
+
+function titleFromFile(fileName: string, fileText: string) {
+  return fileText.match(/^#\s+(.+)$/m)?.[1]?.trim() || fileName.replace(/\.[^.]+$/, "");
 }
 
 function scoreText(a: string, b: string) {
@@ -161,7 +174,10 @@ export function DocumentUploadWorkbench({ commitments }: { commitments: Commitme
             id: payload.data.id as string,
             title,
             documentType,
+            fileName,
+            importedAt: new Date().toISOString(),
             candidates: candidates.length,
+            candidatesList: candidates,
             reviewer: "Analista documental",
             nextStep: "Validar citas, metadatos y candidatos detectados",
             status: "Pendiente de revision" as const
@@ -200,9 +216,10 @@ export function DocumentUploadWorkbench({ commitments }: { commitments: Commitme
             onChange={async (event) => {
               const file = event.target.files?.[0];
               if (!file) return;
+              const fileText = await file.text();
               setFileName(file.name);
-              setTitle((current) => current || file.name.replace(/\.[^.]+$/, ""));
-              setText(await file.text());
+              setTitle((current) => current || titleFromFile(file.name, fileText));
+              setText(fileText);
             }}
           />
         </label>
@@ -328,6 +345,46 @@ export function DocumentUploadWorkbench({ commitments }: { commitments: Commitme
                       className="primary"
                       type="button"
                       onClick={() => {
+                        const incorporatedAt = new Date().toISOString();
+                        const sessionCommitments: Commitment[] = item.candidatesList.map((candidate, index) => ({
+                          id: `c-${item.id}-${candidate.id}`,
+                          stableId: `${item.id}-${String(index + 1).padStart(3, "0")}`,
+                          sourceId: item.id,
+                          sourceType: item.documentType,
+                          documentTitle: item.title,
+                          emittedAt: incorporatedAt.slice(0, 10),
+                          speaker: "Fuente incorporada por seguimiento",
+                          organization: "Carga local",
+                          kind: toCommitmentKind(candidate.kind),
+                          sector: candidate.sector,
+                          topic: candidate.sector,
+                          normalizedText: candidate.text,
+                          originalExcerpt: candidate.text,
+                          promisedAction: candidate.text,
+                          tags: ["carga-local", item.documentType, candidate.sector].map(normalize),
+                          verificationState: "REVIEWED",
+                          implementationState: "Por cumplir",
+                          confidence: 0.7,
+                          isDemo: false,
+                          lastReviewedAt: incorporatedAt.slice(0, 10),
+                          evidence: [
+                            {
+                              id: `ev-${item.id}-${candidate.id}`,
+                              sourceId: item.id,
+                              label: `${item.fileName || item.title} / preanalisis aprobado`,
+                              excerpt: candidate.text,
+                              confidence: 0.7
+                            }
+                          ],
+                          history: [
+                            {
+                              date: incorporatedAt.slice(0, 10),
+                              actor: "revision-local",
+                              change: "Incorporado desde cola de procesamiento de la plataforma."
+                            }
+                          ]
+                        }));
+                        appendSessionCommitments(sessionCommitments);
                         setQueue((current) =>
                           current.map((row) =>
                             row.id === item.id
@@ -341,7 +398,7 @@ export function DocumentUploadWorkbench({ commitments }: { commitments: Commitme
                         );
                         setStatus({
                           tone: "success",
-                          message: `${item.id}: incorporado al seguimiento. No queda ningun paso adicional pendiente.`
+                          message: `${item.id}: incorporado al seguimiento con ${sessionCommitments.length} compromisos visibles en el Explorador. No queda ningun paso adicional pendiente.`
                         });
                       }}
                     >

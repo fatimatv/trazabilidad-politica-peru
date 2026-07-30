@@ -1,18 +1,34 @@
 "use client";
 
 import { Search, Download } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { CommitmentTable } from "./CommitmentTable";
+import { readSessionCommitments, SESSION_COMMITMENTS_EVENT } from "@/lib/session-commitments";
 import type { Commitment } from "@/lib/types";
 
 export function CommitmentFilters({ rows, sectors }: { rows: Commitment[]; sectors: string[] }) {
   const [q, setQ] = useState("");
   const [sector, setSector] = useState("all");
   const [state, setState] = useState("all");
+  const [sessionRows, setSessionRows] = useState<Commitment[]>([]);
+
+  useEffect(() => {
+    const refresh = () => setSessionRows(readSessionCommitments());
+    refresh();
+    window.addEventListener(SESSION_COMMITMENTS_EVENT, refresh);
+    window.addEventListener("storage", refresh);
+    return () => {
+      window.removeEventListener(SESSION_COMMITMENTS_EVENT, refresh);
+      window.removeEventListener("storage", refresh);
+    };
+  }, []);
+
+  const allRows = useMemo(() => [...sessionRows, ...rows], [rows, sessionRows]);
+  const allSectors = useMemo(() => Array.from(new Set([...sectors, ...sessionRows.map((item) => item.sector)])).sort(), [sectors, sessionRows]);
 
   const filtered = useMemo(() => {
     const needle = q.trim().toLowerCase();
-    return rows.filter((item) => {
+    return allRows.filter((item) => {
       const matchesText =
         !needle ||
         [item.stableId, item.normalizedText, item.sector, item.topic, item.sourceType, item.documentTitle]
@@ -23,7 +39,7 @@ export function CommitmentFilters({ rows, sectors }: { rows: Commitment[]; secto
       const matchesState = state === "all" || item.implementationState === state || item.verificationState === state;
       return matchesText && matchesSector && matchesState;
     });
-  }, [q, rows, sector, state]);
+  }, [allRows, q, sector, state]);
 
   return (
     <>
@@ -36,7 +52,7 @@ export function CommitmentFilters({ rows, sectors }: { rows: Commitment[]; secto
           Sector
           <select value={sector} onChange={(event) => setSector(event.target.value)}>
             <option value="all">Todos</option>
-            {sectors.map((item) => <option key={item} value={item}>{item}</option>)}
+            {allSectors.map((item) => <option key={item} value={item}>{item}</option>)}
           </select>
         </label>
         <label>
@@ -52,6 +68,11 @@ export function CommitmentFilters({ rows, sectors }: { rows: Commitment[]; secto
         <a className="button" href="/api/export/csv"><Download size={16} aria-hidden />CSV</a>
         <a className="button" href="/api/export/json"><Search size={16} aria-hidden />JSON</a>
       </div>
+      {sessionRows.length ? (
+        <div className="session-banner" aria-live="polite">
+          {sessionRows.length} compromisos incorporados desde documentos aprobados en este navegador.
+        </div>
+      ) : null}
       <p aria-live="polite">{filtered.length} compromisos visibles.</p>
       <CommitmentTable rows={filtered} />
     </>

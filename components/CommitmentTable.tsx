@@ -34,7 +34,10 @@ export function CommitmentTable({ rows }: { rows: Commitment[]; showSource?: boo
         <tbody>
           {rows.map((row) => (
             <tr key={row.id}>
-              <td><Link href={`/commitments/${row.id}`}>{row.stableId}</Link>{row.isDemo ? <DemoBadge /> : null}</td>
+              <td>
+                {row.sourceId.startsWith("src-local-") ? row.stableId : <Link href={`/commitments/${row.id}`}>{row.stableId}</Link>}
+                {row.isDemo ? <DemoBadge /> : null}
+              </td>
               <td>{row.normalizedText}</td>
               <td>
                 <strong>{row.sourceType}</strong>
