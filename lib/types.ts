@@ -70,6 +70,7 @@ export type Commitment = {
   id: string;
   stableId: string;
   sourceId: string;
+  sourceType: string;
   documentTitle: string;
   emittedAt?: string;
   speaker: string;

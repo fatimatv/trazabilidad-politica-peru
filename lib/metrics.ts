@@ -18,7 +18,7 @@ export function filterCommitments(params: { q?: string; sector?: string; state?:
   return commitments.filter((item) => {
     const matchesQuery =
       !q ||
-      [item.stableId, item.normalizedText, item.originalExcerpt, item.sector, item.topic, item.speaker]
+      [item.stableId, item.normalizedText, item.originalExcerpt, item.sector, item.topic, item.speaker, item.sourceType, item.documentTitle]
         .join(" ")
         .toLowerCase()
         .includes(q);
@@ -88,6 +88,9 @@ export function toCsv(rows: Commitment[]) {
     "sector",
     "topic",
     "kind",
+    "sourceType",
+    "documentTitle",
+    "emittedAt",
     "normalizedText",
     "implementationState",
     "sourceState",

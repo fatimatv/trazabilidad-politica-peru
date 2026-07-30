@@ -7,7 +7,6 @@ export default function CommitmentsPage() {
     <>
       <h1>Explorador de compromisos</h1>
       <p className="lede">Busqueda, filtros combinables y exportacion sobre compromisos normalizados con evidencia visible.</p>
-      <div className="demo-banner">Los registros importados desde insumos locales son evidencia pendiente: no deben interpretarse como conclusiones verificadas.</div>
       <CommitmentFilters rows={commitments} sectors={getSectors()} />
     </>
   );

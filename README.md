@@ -2,7 +2,7 @@
 
 Plataforma web para analizar compromisos publicos desde documentos de campana y gobierno hasta acciones, presupuesto, ejecucion y resultados.
 
-La version actual carga insumos locales de debates, plan de gobierno de Fuerza Popular y mensaje presidencial. El universo inicial incluye 446 registros del plan, 81 declaraciones de debate y ofrecimientos extraidos del mensaje presidencial. No publica conclusiones verificadas; cada cita debe contrastarse con fuentes primarias oficiales antes de pasar a estado revisado o publicado.
+La version actual carga insumos locales de debates, plan de gobierno de Fuerza Popular y mensaje presidencial. El universo inicial incluye 446 registros del plan, 81 declaraciones de debate y ofrecimientos extraidos del mensaje presidencial. Los compromisos quedan registrados con su documento de origen; el cumplimiento parte como `Por cumplir` y cambia solo ante acciones, normas, presupuesto, ejecucion o resultados posteriores.
 
 ## Stack
 

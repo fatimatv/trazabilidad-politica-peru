@@ -97,6 +97,10 @@ function sourceTitle(sourceId: string) {
   return sources.find((source) => source.id === sourceId)?.title ?? "Fuente documental";
 }
 
+function sourceType(sourceId: string) {
+  return sources.find((source) => source.id === sourceId)?.type ?? "Fuente documental";
+}
+
 function getThemeName(themeId: string) {
   return themeName.get(themeId) ?? themeId;
 }
@@ -111,6 +115,7 @@ function planToCommitment(item: ReferenceProposal): Commitment {
     id: `c-${item.id}`,
     stableId: item.id,
     sourceId: "src-plan-gobierno",
+    sourceType: "Plan de gobierno",
     documentTitle: "Plan de Gobierno 2026-2031: Peru con Orden",
     emittedAt: "PENDIENTE-CONFIRMAR",
     speaker: "Fuerza Popular",
@@ -150,6 +155,7 @@ function debateToCommitment(item: ReferenceDeclaration): Commitment {
     id: `c-${item.id}`,
     stableId: item.id,
     sourceId,
+    sourceType: sourceType(sourceId),
     documentTitle: sourceTitle(sourceId),
     emittedAt: "PENDIENTE-CONFIRMAR",
     speaker: item.vocero ?? "Keiko Fujimori",
@@ -234,6 +240,7 @@ function parseSpeechCommitments(): Commitment[] {
         id: `c-${stableId}`,
         stableId,
         sourceId: "src-investidura",
+        sourceType: "Mensaje presidencial",
         documentTitle: "Mensaje a la Nación del 28 de julio de 2026",
         emittedAt: "2026-07-28",
         speaker: "Keiko Fujimori",

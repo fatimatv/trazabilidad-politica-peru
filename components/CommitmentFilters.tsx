@@ -13,7 +13,12 @@ export function CommitmentFilters({ rows, sectors }: { rows: Commitment[]; secto
   const filtered = useMemo(() => {
     const needle = q.trim().toLowerCase();
     return rows.filter((item) => {
-      const matchesText = !needle || [item.stableId, item.normalizedText, item.sector, item.topic].join(" ").toLowerCase().includes(needle);
+      const matchesText =
+        !needle ||
+        [item.stableId, item.normalizedText, item.sector, item.topic, item.sourceType, item.documentTitle]
+          .join(" ")
+          .toLowerCase()
+          .includes(needle);
       const matchesSector = sector === "all" || item.sector === sector;
       const matchesState = state === "all" || item.implementationState === state || item.verificationState === state;
       return matchesText && matchesSector && matchesState;

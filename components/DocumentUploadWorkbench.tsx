@@ -19,7 +19,7 @@ type QueueItem = {
   documentType: string;
   reviewer: string;
   nextStep: string;
-  status: "Pendiente de revision" | "En revision documental" | "Aprobado para publicar";
+  status: "Pendiente de revision" | "En revision documental" | "Incorporado al seguimiento";
 };
 
 const reviewSteps = [
@@ -27,14 +27,14 @@ const reviewSteps = [
   ["Preanalisis", "Automatico: el sistema propone compromisos, temas y posibles vinculos."],
   ["Revision documental", "Analista: valida citas, fuente, fecha, tipo documental y segmentacion."],
   ["Revision juridica/politica", "Revisor: confirma alcance, consistencia, omisiones y fuerza probatoria."],
-  ["Actualizacion", "Administrador: publica cambios aprobados en compromisos, comparador y grafos."]
+  ["Incorporado", "Cierre: el insumo aprobado queda incorporado al seguimiento de esta sesion."]
 ];
 
 const reviewResponsibilities = [
   ["Tu accion", "Revisar los candidatos del preanalisis, corregir vinculos y marcar si cada idea se conserva, cambia, se matiza, desaparece o aparece nueva."],
   ["Analista documental", "Comprueba que cada candidato tenga fuente, fecha, cita o extracto y una segmentacion razonable."],
   ["Revisor", "Valida la interpretacion politica/juridica antes de convertirla en conclusion publica."],
-  ["Administrador", "Publica solo lo aprobado y deja trazabilidad en la bitacora."]
+  ["Cierre", "Al aprobar, el insumo queda incorporado al seguimiento de esta sesion y el flujo se cierra."]
 ];
 
 const sectorRules: Array<[string, RegExp]> = [
@@ -288,65 +288,67 @@ export function DocumentUploadWorkbench({ commitments }: { commitments: Commitme
               <p>
                 Para continuar: revisa los candidatos del preanalisis, corrige mentalmente lo que no corresponde y pulsa
                 <strong> Marcar revision documental</strong>. Si el insumo esta listo para incorporarse al seguimiento,
-                pulsa <strong>Aprobar incorporacion</strong>.
+                pulsa <strong>Aprobar e incorporar</strong>. Ese boton cierra el flujo; no hay otro paso oculto.
               </p>
             </div>
             {queue.map((item) => (
-              <article className={item.status === "Aprobado para publicar" ? "approved" : ""} key={item.id}>
+              <article className={item.status === "Incorporado al seguimiento" ? "approved" : ""} key={item.id}>
                 <strong>{item.title}</strong>
                 <span>{item.documentType} / {item.candidates} candidatos / {item.reviewer}</span>
                 <span>Estado: {item.status}</span>
                 <small>{item.nextStep}</small>
-                <div className="queue-actions">
-                  <button
-                    className="button"
-                    disabled={item.status === "Aprobado para publicar"}
-                    type="button"
-                    onClick={() => {
-                      setQueue((current) =>
-                        current.map((row) =>
-                          row.id === item.id
-                            ? {
-                                ...row,
-                                status: "En revision documental",
-                                nextStep: "Revisar candidatos uno por uno y confirmar si actualizan cumplimiento o solo agregan contexto"
-                              }
-                            : row
-                        )
-                      );
-                      setStatus({
-                        tone: "success",
-                        message: `${item.id}: revision documental abierta. Revisa candidatos, citas y vinculos antes de aprobar.`
-                      });
-                    }}
-                  >
-                    Marcar revision documental
-                  </button>
-                  <button
-                    className="primary"
-                    disabled={item.status === "Aprobado para publicar"}
-                    type="button"
-                    onClick={() => {
-                      setQueue((current) =>
-                        current.map((row) =>
-                          row.id === item.id
-                            ? {
-                                ...row,
-                                status: "Aprobado para publicar",
-                                nextStep: "Listo para que el administrador lo incorpore a compromisos, comparador y grafos"
-                              }
-                            : row
-                        )
-                      );
-                      setStatus({
-                        tone: "success",
-                        message: `${item.id}: aprobado. En esta demo queda marcado como listo para publicacion; en produccion se guardaria en base de datos y actualizaria la plataforma.`
-                      });
-                    }}
-                  >
-                    Aprobar incorporacion
-                  </button>
-                </div>
+                {item.status === "Incorporado al seguimiento" ? (
+                  <p className="approval-complete">Flujo cerrado. El insumo queda incorporado al seguimiento de esta sesion.</p>
+                ) : (
+                  <div className="queue-actions">
+                    <button
+                      className="button"
+                      type="button"
+                      onClick={() => {
+                        setQueue((current) =>
+                          current.map((row) =>
+                            row.id === item.id
+                              ? {
+                                  ...row,
+                                  status: "En revision documental",
+                                  nextStep: "Revisar candidatos uno por uno y confirmar si actualizan cumplimiento o solo agregan contexto"
+                                }
+                              : row
+                          )
+                        );
+                        setStatus({
+                          tone: "success",
+                          message: `${item.id}: revision documental abierta. Revisa candidatos, citas y vinculos antes de aprobar.`
+                        });
+                      }}
+                    >
+                      Marcar revision documental
+                    </button>
+                    <button
+                      className="primary"
+                      type="button"
+                      onClick={() => {
+                        setQueue((current) =>
+                          current.map((row) =>
+                            row.id === item.id
+                              ? {
+                                  ...row,
+                                  status: "Incorporado al seguimiento",
+                                  nextStep: "Flujo cerrado: incorporado al seguimiento de cumplimiento de esta sesion"
+                                }
+                              : row
+                          )
+                        );
+                        setStatus({
+                          tone: "success",
+                          message: `${item.id}: incorporado al seguimiento. No queda ningun paso adicional pendiente.`
+                        });
+                      }}
+                    >
+                      Aprobar e incorporar
+                    </button>
+                  </div>
+                )}
               </article>
             ))}
           </div>

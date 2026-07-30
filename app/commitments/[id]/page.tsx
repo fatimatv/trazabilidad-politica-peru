@@ -30,6 +30,8 @@ export default async function CommitmentDetailPage({ params }: { params: Promise
             <p><strong>Tipo:</strong> {item.kind}</p>
             <p><strong>Sector:</strong> {item.sector} / {item.topic}</p>
             <p><strong>Emisor:</strong> {item.speaker} - {item.organization}</p>
+            <p><strong>Documento de origen:</strong> {item.sourceType} / {item.documentTitle}</p>
+            <p><strong>Fecha del documento:</strong> {item.emittedAt && item.emittedAt !== "PENDIENTE-CONFIRMAR" ? item.emittedAt : "Pendiente de precisar"}</p>
             <p><strong>Instrumento previsto:</strong> {item.expectedInstrument ?? "No especificado"}</p>
             <p><strong>Plazo:</strong> {item.announcedDeadline ?? "No especificado"}</p>
             <p><strong>Condiciones:</strong> {item.caveats ?? "Sin salvedades registradas"}</p>
@@ -37,7 +39,7 @@ export default async function CommitmentDetailPage({ params }: { params: Promise
           <div className="card">
             <h2>Cadena de aterrizaje</h2>
             <div className="flow">
-              <div>Fuente<br /><strong>{item.documentTitle}</strong></div>
+              <div>Fuente<br /><strong>{item.sourceType}</strong></div>
               <div>Registro<br /><strong>{sourceStateLabel(item.verificationState)}</strong></div>
               <div>Cumplimiento<br /><strong>{item.implementationState}</strong></div>
               <div>Resultado<br /><strong>Por evaluar</strong></div>
