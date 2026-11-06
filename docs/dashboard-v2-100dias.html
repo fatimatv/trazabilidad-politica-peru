@@ -30,6 +30,20 @@ td{padding:10px 11px;border-bottom:1px solid #edf0f4;vertical-align:top;line-hei
 .timeline div{padding:7px 0;border-bottom:1px solid #edf0f4}
 .factgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.fact{border:1px solid #e5e7eb;border-radius:12px;padding:13px;background:#fff}
 .fact b{color:var(--b)}a{color:var(--b)}
+
+.tabs{display:flex;gap:8px;margin:0 0 18px;flex-wrap:wrap}
+.tabbtn{border:1px solid #d1d5db;background:#fff;color:#374151;padding:10px 16px;border-radius:10px;font-weight:700;cursor:pointer}
+.tabbtn.active{background:var(--b);color:#fff;border-color:var(--b)}
+.pane{display:none}.pane.active{display:block}
+.methodgrid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.scale{display:grid;grid-template-columns:110px 160px 1fr;gap:0;border:1px solid #e5e7eb;border-radius:12px;overflow:hidden}
+.scale>div{padding:11px 12px;border-bottom:1px solid #edf0f4}
+.scale .hd{background:var(--b);color:#fff;font-weight:700}
+.scoreband{font-family:'Cascadia Code','Cascadia Mono',Consolas,'Courier New',monospace!important;font-weight:700}
+.formula{background:#f8faff;border-left:5px solid var(--b);padding:14px;border-radius:10px;margin:12px 0}
+.methodlist{margin:0;padding-left:20px}.methodlist li{margin:8px 0;line-height:1.45}
+@media(max-width:1000px){.methodgrid{grid-template-columns:1fr}.scale{grid-template-columns:90px 130px 1fr}}
+
 @media(max-width:1000px){.k{grid-template-columns:repeat(2,1fr)}.g,.ctrl,.factgrid{grid-template-columns:1fr}}
 </style>
 <body>
@@ -37,6 +51,11 @@ td{padding:10px 11px;border-bottom:1px solid #edf0f4;vertical-align:top;line-hei
 <h1>Trazabilidad política: campaña vs. facultades vs. PGG vs. mensaje de 100 días</h1>
 <div class="sub">Keiko Fujimori / Fuerza Popular · actualización al 6 de noviembre de 2026</div></header>
 <div class="c">
+<div class="tabs" role="tablist" aria-label="Secciones de la plataforma">
+<button type="button" class="tabbtn active" id="tabDashboard" role="tab" aria-selected="true" aria-controls="dashboardPane">Dashboard</button>
+<button type="button" class="tabbtn" id="tabMetodo" role="tab" aria-selected="false" aria-controls="metodoPane">Metodología</button>
+</div>
+<section id="dashboardPane" class="pane active" role="tabpanel" aria-labelledby="tabDashboard">
 <div id="k" class="k"></div>
 <div class="i"><strong>Hallazgo central.</strong> El mensaje de 100 días mantiene la continuidad en seguridad, MYPE, obras, empleo y gestión pública, pero añade una nueva dimensión: ya no basta medir coherencia programática; ahora también debe verificarse si los resultados que el Gobierno afirma haber alcanzado cuentan con evidencia pública independiente y suficiente.</div>
 
@@ -63,6 +82,66 @@ td{padding:10px 11px;border-bottom:1px solid #edf0f4;vertical-align:top;line-hei
 
 <div class="p" style="margin-top:18px"><h2>Verificación de afirmaciones cuantitativas seleccionadas</h2>
 <div class="factgrid" id="facts"></div></div>
+
+
+</section>
+<section id="metodoPane" class="pane" role="tabpanel" aria-labelledby="tabMetodo">
+<div class="p">
+<h2>Metodología de trazabilidad y nivel de cumplimiento</h2>
+<p>La plataforma distingue dos preguntas diferentes: <strong>verificación factual</strong> y <strong>cumplimiento</strong>. Una afirmación puede estar documentada como declaración oficial y, sin embargo, no acreditar que una promesa se haya cumplido. El nivel de cumplimiento solo se asigna cuando existe una promesa, meta, obligación o compromiso previo suficientemente determinado para compararlo con la ejecución.</p>
+
+<div class="methodgrid">
+<div>
+<h3>1. Verificación de la afirmación</h3>
+<ul class="methodlist">
+<li><strong>Verificado:</strong> una fuente pública independiente y suficientemente precisa confirma el hecho, cifra, norma o resultado afirmado.</li>
+<li><strong>Parcialmente verificado:</strong> existe evidencia convergente, pero falta confirmar una parte relevante del alcance, periodo, universo o cifra.</li>
+<li><strong>Sin evidencia suficiente / verificación pendiente:</strong> la afirmación está documentada en el discurso, pero no se localizó evidencia pública bastante para corroborarla.</li>
+<li><strong>Necesita precisión:</strong> el dato puede ser plausible, pero el periodo, fuente, metodología o universo no están definidos con suficiente exactitud.</li>
+<li><strong>Omisión relevante / no mencionado:</strong> una línea programática previa no aparece materialmente en el hito analizado.</li>
+</ul>
+</div>
+<div>
+<h3>2. Puntaje de cumplimiento</h3>
+<p>Cuando la afirmación de los 100 días se vincula con una promesa o compromiso previo, se evalúan cuatro dimensiones. Si alguna no resulta aplicable, su peso se redistribuye proporcionalmente entre las restantes.</p>
+<div class="formula"><strong>Fórmula base</strong><br>
+<span class="num">40%</span> evidencia de implementación + <span class="num">25%</span> alcance/cobertura + <span class="num">25%</span> resultado/meta + <span class="num">10%</span> oportunidad/plazo.
+</div>
+<ul class="methodlist">
+<li><strong>Evidencia de implementación (40%):</strong> existencia de norma, presupuesto, contrato, servicio, obra, programa o actuación verificable.</li>
+<li><strong>Alcance o cobertura (25%):</strong> cuánto del universo prometido fue efectivamente atendido.</li>
+<li><strong>Resultado o meta (25%):</strong> grado en que se alcanzó el producto o resultado comprometido, no solo el anuncio o inicio de actividades.</li>
+<li><strong>Oportunidad o plazo (10%):</strong> cumplimiento dentro del plazo anunciado o razonablemente exigible.</li>
+</ul>
+</div>
+</div>
+
+<h3>Escala de nivel de cumplimiento</h3>
+<div class="scale" aria-label="Escala de cumplimiento">
+<div class="hd">Puntaje</div><div class="hd">Nivel</div><div class="hd">Criterio</div>
+<div class="scoreband">90–100</div><div><span class="badge vok">Cumplido</span></div><div>La evidencia acredita sustancialmente la ejecución, cobertura y resultado prometidos dentro del alcance y plazo aplicables.</div>
+<div class="scoreband">75–89</div><div><span class="badge co">Cumplimiento alto</span></div><div>La mayor parte del compromiso está ejecutada; persisten brechas menores de cobertura, resultado o plazo.</div>
+<div class="scoreband">50–74</div><div><span class="badge vpar">Cumplimiento parcial</span></div><div>Existen acciones y resultados materiales, pero una parte relevante de la meta, cobertura o resultado sigue pendiente.</div>
+<div class="scoreband">1–49</div><div><span class="badge no">Cumplimiento incipiente</span></div><div>Hay evidencia de inicio o medidas preparatorias, pero el avance es todavía insuficiente respecto de lo prometido.</div>
+<div class="scoreband">0</div><div><span class="badge vbad">No cumplido</span></div><div>El plazo exigible venció sin ejecución material suficiente o la evidencia disponible muestra que la meta no se alcanzó.</div>
+<div class="scoreband">N/A</div><div><span class="badge vneu">No evaluable aún</span></div><div>No existe una meta o plazo suficientemente determinado, el compromiso sigue dentro de su periodo de ejecución, o falta evidencia mínima para puntuar sin especular.</div>
+</div>
+
+<h3>Reglas de interpretación</h3>
+<ul class="methodlist">
+<li>El <strong>anuncio</strong> de una medida no equivale a cumplimiento: debe existir evidencia de ejecución.</li>
+<li>La <strong>aprobación de una norma</strong> puede constituir cumplimiento total si la promesa era precisamente aprobar esa norma; si la promesa era lograr un resultado social o económico, la norma solo acredita una etapa de implementación.</li>
+<li>Las cifras del propio Gobierno son tratadas como <strong>fuente primaria de la afirmación</strong>, no como corroboración independiente del resultado.</li>
+<li>Se priorizan normas publicadas, datos administrativos, ejecución presupuestal, estadísticas oficiales, documentos de entidades competentes y, cuando sea posible, fuentes independientes.</li>
+<li>La ausencia de evidencia pública se clasifica como <strong>“sin evidencia suficiente”</strong>; no se interpreta automáticamente como falsedad ni como incumplimiento.</li>
+<li>El puntaje es <strong>analítico y reproducible, no oficial</strong>. Debe actualizarse cuando aparezca nueva evidencia o venza un plazo relevante.</li>
+</ul>
+
+<h3>Cadena de trazabilidad utilizada</h3>
+<p><strong>Promesa electoral → solicitud de facultades legislativas → Política General de Gobierno → mensaje de 100 días → ejecución verificable.</strong></p>
+<div class="note">Fecha metodológica de referencia: 6 de noviembre de 2026. La metodología se aplica de forma conservadora: ante duda razonable, se asigna la categoría menos concluyente hasta contar con evidencia suficiente.</div>
+</div>
+</section>
 
 <div class="foot">IALAW · Fuentes base: Plan de Gobierno Fuerza Popular 2026–2031; solicitud de delegación de facultades; D.S. N.º 127-2026-PCM; mensaje presidencial de 100 días; normas y fuentes oficiales enlazadas. Las calificaciones de verificación expresan el nivel de evidencia pública localizada a la fecha, no una declaración de verdad absoluta.</div>
 </div>
@@ -106,5 +185,19 @@ function render(){
 }
 document.querySelector('#timeline').innerHTML=TL.map(x=>`<div class="num"><b>${x[0]}</b></div><div><b>${x[1]}</b></div><div>${x[2]}</div>`).join('');
 document.querySelector('#facts').innerHTML=CLAIMS.map(x=>`<div class="fact"><b>${x.claim}</b><div style="margin:8px 0"><span class="badge ${vcls(x.status)}">${x.status}</span> <span class="num">${x.confidence}%</span></div><div>${x.evidence}</div><div class="note" style="margin-top:7px"><a href="${x.url}" target="_blank" rel="noopener">Ver fuente</a></div></div>`).join('');
+
+const tabDashboard=document.querySelector('#tabDashboard'),tabMetodo=document.querySelector('#tabMetodo');
+function showPane(which){
+ const dash=which==='dashboard';
+ document.querySelector('#dashboardPane').classList.toggle('active',dash);
+ document.querySelector('#metodoPane').classList.toggle('active',!dash);
+ tabDashboard.classList.toggle('active',dash);
+ tabMetodo.classList.toggle('active',!dash);
+ tabDashboard.setAttribute('aria-selected',String(dash));
+ tabMetodo.setAttribute('aria-selected',String(!dash));
+}
+tabDashboard.addEventListener('click',()=>showPane('dashboard'));
+tabMetodo.addEventListener('click',()=>showPane('metodo'));
+
 ['q','cf','nf','vf'].forEach(id=>document.querySelector('#'+id).addEventListener('input',render));render();
 </script></body></html>
