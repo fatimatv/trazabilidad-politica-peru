@@ -32,3 +32,26 @@ Esta etapa amplía la metodología de IALAW Trazabilidad Política:
 - RMV: https://busquedas.elperuano.pe/dispositivo/EX/2559163-1/pdf
 - Salud digital: https://comunicaciones.congreso.gob.pe/noticias/diputados-alertan-sobre-crisis-en-el-sector-salud-y-demandan-soluciones-urgentes/
 - Video: https://www.youtube.com/watch?v=gMFAP4FvscE
+
+
+## Nivel de cumplimiento
+
+El nivel de cumplimiento se evalúa únicamente cuando existe una promesa, meta, obligación o compromiso suficientemente determinado.
+
+**Fórmula base:**
+- 40% evidencia de implementación.
+- 25% alcance o cobertura.
+- 25% resultado o meta.
+- 10% oportunidad o plazo.
+
+Si una dimensión no es aplicable, su peso se redistribuye proporcionalmente entre las dimensiones restantes.
+
+**Escala:**
+- 90–100: Cumplido.
+- 75–89: Cumplimiento alto.
+- 50–74: Cumplimiento parcial.
+- 1–49: Cumplimiento incipiente.
+- 0: No cumplido.
+- N/A: No evaluable aún.
+
+La verificación factual y el cumplimiento son dimensiones distintas. Una afirmación oficial puede estar documentada, pero ello no acredita por sí solo el cumplimiento de una promesa. La ausencia de evidencia suficiente no se equipara automáticamente a falsedad o incumplimiento.
