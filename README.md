@@ -63,3 +63,12 @@ posterior acredita accion gubernamental:
 3. Presupuesto asignado.
 4. Ejecucion.
 5. Resultado verificado.
+
+
+## Actualización: mensaje de 100 días
+
+La plataforma incorpora como cuarta capa el mensaje de los 100 días del Gobierno de Keiko Fujimori y añade verificación factual de afirmaciones de gestión.
+
+- Dashboard V2: `docs/dashboard-v2-100dias.html`
+- Metodología y fuentes: `docs/mensaje-100-dias-verificacion.md`
+- Producción: https://ialaw-trazabilidad-keiko-facultades-2026-v2-fatimatvs-projects.vercel.app/
